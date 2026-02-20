@@ -196,7 +196,7 @@ function Lobby() {
           <div className={`w-3 h-3 rounded-full ${
             connectionStatus === 'connected' ? 'bg-green-400' : 
             connectionStatus === 'reconnecting' ? 'bg-yellow-400' : 'bg-red-400'
-          }`} title={connectionStatus} />
+          }`} title={connectionStatus || 'unknown'} />
         </div>
         <div className="text-center text-gray-300">
           <p className="text-xl mb-1">{tournament.name}</p>

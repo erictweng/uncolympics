@@ -8,7 +8,7 @@ interface GameStore {
   players: Player[]
   teams: Team[]
   votes: LeaderVote[]
-  connectionStatus: 'connected' | 'reconnecting' | 'disconnected'
+  connectionStatus: 'connected' | 'reconnecting' | 'disconnected' | null
   currentGame: Game | null
   titles: Title[]
   playerStats: PlayerStat[]
@@ -125,7 +125,7 @@ const useGameStore = create<GameStore>((set) => ({
   players: [],
   teams: [],
   votes: [],
-  connectionStatus: 'disconnected',
+  connectionStatus: null,
   currentGame: null,
   titles: [],
   playerStats: [],
@@ -330,7 +330,7 @@ const useGameStore = create<GameStore>((set) => ({
     players: [],
     teams: [],
     votes: [],
-    connectionStatus: 'disconnected',
+    connectionStatus: null,
     currentGame: null,
     titles: [],
     playerStats: [],
