@@ -88,12 +88,18 @@ export async function calculateTitles(gameId: string): Promise<{
   }[] = [];
 
   // 5. For each title def, call the appropriate evaluator
-  for (const [titleName, definition] of Object.entries(titleDefinitions)) {
+  // title_definitions can be an array of objects or a keyed object
+  const defsArray = Array.isArray(titleDefinitions)
+    ? titleDefinitions
+    : Object.values(titleDefinitions);
+
+  for (const definition of defsArray) {
     if (!definition || typeof definition !== 'object') continue;
 
     const def = definition as any;
+    const titleName = def.name || 'Untitled';
     const titleDesc = def.desc || '';
-    const isFunny = def.is_funny || false;
+    const isFunny = def.isFunny || def.is_funny || false;
     const condition = def.condition || {};
     
     let qualifiedPlayerIds: string[] = [];

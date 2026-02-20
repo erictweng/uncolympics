@@ -29,6 +29,9 @@ Each bug file includes:
 | 011 | [player_stats No UPDATE Policy](011-player-stats-no-update-policy.md) | 🔴 Critical | 4 | ✅ Fixed |
 | 012 | [Spectator Can Submit Stats](012-spectator-can-submit-stats.md) | ⚠️ Medium | 4 | ✅ Fixed |
 | 013 | [player_stats Realtime](013-player-stats-realtime.md) | ⚠️ Medium | 4 | ✅ Fixed |
+| 014 | [titles Missing created_at](014-titles-missing-created-at.md) | ⚠️ Medium | 5 | ✅ Fixed |
+| 015 | [Title Engine Array Iteration](015-title-engine-array-iteration.md) | 🔴 Critical | 5 | ✅ Fixed |
+| 016 | [titles Missing DELETE Policy](016-titles-missing-delete-policy.md) | ⚠️ Medium | 5 | ✅ Fixed |
 
 ## Process (v1)
 
