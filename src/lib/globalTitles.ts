@@ -1,5 +1,4 @@
 import { supabase } from './supabase'
-import type { PlayerStat } from '../types'
 
 export interface GlobalTitleResult {
   playerId: string
@@ -10,20 +9,12 @@ export interface GlobalTitleResult {
 }
 
 /**
- * Calculate tournament-wide global titles.
+ * Calculate tournament-wide global titles based on Sprint 7 requirements.
  * These are awarded at the ceremony after all games are complete.
  * Global titles have game_id = null in the titles table.
  */
 export async function calculateGlobalTitles(tournamentId: string): Promise<GlobalTitleResult[]> {
-  // Fetch all data needed for global title calculations
-  const { data: players, error: playersError } = await supabase
-    .from('players')
-    .select('*')
-    .eq('tournament_id', tournamentId)
-    .not('team_id', 'is', null)
-
-  if (playersError) throw new Error(`Failed to fetch players: ${playersError.message}`)
-
+  // 1. Fetch ALL titles for this tournament (per-game titles)
   const { data: titles, error: titlesError } = await supabase
     .from('titles')
     .select('*')
@@ -32,6 +23,7 @@ export async function calculateGlobalTitles(tournamentId: string): Promise<Globa
 
   if (titlesError) throw new Error(`Failed to fetch titles: ${titlesError.message}`)
 
+  // 2. Fetch all games for this tournament (to know game order, first/second half)
   const { data: games, error: gamesError } = await supabase
     .from('games')
     .select('*')
@@ -41,27 +33,23 @@ export async function calculateGlobalTitles(tournamentId: string): Promise<Globa
 
   if (gamesError) throw new Error(`Failed to fetch games: ${gamesError.message}`)
 
-  // Fetch all player_stats for all games
-  const gameIds = (games || []).map(g => g.id)
-  let allStats: PlayerStat[] = []
-  if (gameIds.length > 0) {
-    const { data: stats, error: statsError } = await supabase
-      .from('player_stats')
-      .select('*')
-      .in('game_id', gameIds)
+  // 3. Fetch all players
+  const { data: players, error: playersError } = await supabase
+    .from('players')
+    .select('*')
+    .eq('tournament_id', tournamentId)
+    .not('team_id', 'is', null)
 
-    if (statsError) throw new Error(`Failed to fetch stats: ${statsError.message}`)
-    allStats = stats || []
-  }
+  if (playersError) throw new Error(`Failed to fetch players: ${playersError.message}`)
 
-  const playerList = players || []
   const titleList = titles || []
   const gameList = games || []
+  const playerList = players || []
   const results: GlobalTitleResult[] = []
 
   if (playerList.length === 0 || gameList.length === 0) return results
 
-  // --- MVP: Most total titles ---
+  // --- 🏆 MVP — most total titles across all games ---
   const titleCountByPlayer = new Map<string, number>()
   for (const t of titleList) {
     titleCountByPlayer.set(t.player_id, (titleCountByPlayer.get(t.player_id) || 0) + 1)
@@ -74,109 +62,16 @@ export async function calculateGlobalTitles(tournamentId: string): Promise<Globa
           results.push({
             playerId,
             titleName: 'MVP',
-            titleDesc: `Earned the most titles in the tournament (${count})`,
+            titleDesc: `Earned the most titles across all games (${count})`,
             isFunny: false,
-            points: 1.0
+            points: 0.5
           })
         }
       }
     }
   }
 
-  // --- Late Bloomer: Most titles in the last game ---
-  if (gameList.length > 0) {
-    const lastGame = gameList[gameList.length - 1]
-    const lastGameTitles = titleList.filter(t => t.game_id === lastGame.id)
-    const lastGameTitleCount = new Map<string, number>()
-    for (const t of lastGameTitles) {
-      lastGameTitleCount.set(t.player_id, (lastGameTitleCount.get(t.player_id) || 0) + 1)
-    }
-    if (lastGameTitleCount.size > 0) {
-      const maxLast = Math.max(...lastGameTitleCount.values())
-      if (maxLast > 0) {
-        for (const [playerId, count] of lastGameTitleCount) {
-          if (count === maxLast) {
-            // Only award if they weren't already dominant throughout
-            const totalTitles = titleCountByPlayer.get(playerId) || 0
-            const isLateBloom = lastGameTitles.length > 0 && count >= Math.ceil(totalTitles * 0.4)
-            if (isLateBloom) {
-              results.push({
-                playerId,
-                titleName: 'Late Bloomer',
-                titleDesc: `Peaked at the perfect time — ${count} title(s) in the final game`,
-                isFunny: false,
-                points: 0.5
-              })
-            }
-          }
-        }
-      }
-    }
-  }
-
-  // --- Title Hoarder: Most titles earned by players on one team ---
-  const titlesByTeam = new Map<string, number>()
-  for (const t of titleList) {
-    const player = playerList.find(p => p.id === t.player_id)
-    if (player?.team_id) {
-      titlesByTeam.set(player.team_id, (titlesByTeam.get(player.team_id) || 0) + 1)
-    }
-  }
-  if (titlesByTeam.size > 0) {
-    const maxTeamTitles = Math.max(...titlesByTeam.values())
-    if (maxTeamTitles > 0) {
-      for (const [teamId, count] of titlesByTeam) {
-        if (count === maxTeamTitles) {
-          // Award to all players on that team
-          const teamPlayers = playerList.filter(p => p.team_id === teamId)
-          for (const p of teamPlayers) {
-            // Only award to players who actually earned titles
-            if ((titleCountByPlayer.get(p.id) || 0) > 0) {
-              results.push({
-                playerId: p.id,
-                titleName: 'Title Hoarder',
-                titleDesc: `Part of the team that hoarded the most titles (${count} total)`,
-                isFunny: false,
-                points: 0.5
-              })
-            }
-          }
-        }
-      }
-    }
-  }
-
-  // --- Iron Man: Submitted stats in every game ---
-  for (const player of playerList) {
-    const gamesWithStats = new Set(
-      allStats.filter(s => s.player_id === player.id).map(s => s.game_id)
-    )
-    if (gamesWithStats.size >= gameList.length && gameList.length > 1) {
-      results.push({
-        playerId: player.id,
-        titleName: 'Iron Man',
-        titleDesc: `Submitted stats in every single game (${gameList.length}/${gameList.length})`,
-        isFunny: false,
-        points: 0.5
-      })
-    }
-  }
-
-  // --- Ghost: Player who earned zero titles all tournament ---
-  for (const player of playerList) {
-    const playerTitleCount = titleCountByPlayer.get(player.id) || 0
-    if (playerTitleCount === 0) {
-      results.push({
-        playerId: player.id,
-        titleName: 'Ghost',
-        titleDesc: 'Went the entire tournament without earning a single title',
-        isFunny: true,
-        points: 0.5
-      })
-    }
-  }
-
-  // --- Versatile: Earned titles in the most different games ---
+  // --- 🎯 Title Hoarder — titles across the most different games ---
   const gamesWithTitlesByPlayer = new Map<string, Set<string>>()
   for (const t of titleList) {
     if (!t.game_id) continue
@@ -187,13 +82,13 @@ export async function calculateGlobalTitles(tournamentId: string): Promise<Globa
   }
   if (gamesWithTitlesByPlayer.size > 0) {
     const maxGames = Math.max(...[...gamesWithTitlesByPlayer.values()].map(s => s.size))
-    if (maxGames > 1) {
+    if (maxGames >= 2) { // Only award if they have titles in 2+ games
       for (const [playerId, gameSet] of gamesWithTitlesByPlayer) {
         if (gameSet.size === maxGames) {
           results.push({
             playerId,
-            titleName: 'Versatile',
-            titleDesc: `Earned titles across ${maxGames} different games`,
+            titleName: 'Title Hoarder',
+            titleDesc: `Earned titles across the most different games (${maxGames} games)`,
             isFunny: false,
             points: 0.5
           })
@@ -202,7 +97,60 @@ export async function calculateGlobalTitles(tournamentId: string): Promise<Globa
     }
   }
 
-  // --- Class Clown: Most funny titles ---
+  // --- 📈 Late Bloomer — more titles in 2nd half of games than 1st half ---
+  if (gameList.length >= 2) { // Only award if there were at least 2 games
+    const totalGames = gameList.length
+    const firstHalfEnd = Math.floor(totalGames / 2)
+    
+    // Split games by game_order: first half = order <= firstHalfEnd, second half = rest
+    const firstHalfGames = gameList.filter(g => g.game_order <= firstHalfEnd)
+    const secondHalfGames = gameList.filter(g => g.game_order > firstHalfEnd)
+    
+    const firstHalfGameIds = new Set(firstHalfGames.map(g => g.id))
+    const secondHalfGameIds = new Set(secondHalfGames.map(g => g.id))
+    
+    for (const player of playerList) {
+      const firstHalfTitles = titleList.filter(t => t.player_id === player.id && firstHalfGameIds.has(t.game_id!))
+      const secondHalfTitles = titleList.filter(t => t.player_id === player.id && secondHalfGameIds.has(t.game_id!))
+      
+      if (secondHalfTitles.length > firstHalfTitles.length && firstHalfTitles.length >= 0) {
+        results.push({
+          playerId: player.id,
+          titleName: 'Late Bloomer',
+          titleDesc: `More titles in 2nd half (${secondHalfTitles.length}) than 1st half (${firstHalfTitles.length})`,
+          isFunny: false,
+          points: 0.5
+        })
+      }
+    }
+  }
+
+  // --- 🔄 Consistent — earned the same title name in multiple games ---
+  const titleNamesByPlayer = new Map<string, Map<string, number>>()
+  for (const t of titleList) {
+    if (!titleNamesByPlayer.has(t.player_id)) {
+      titleNamesByPlayer.set(t.player_id, new Map())
+    }
+    const playerTitleNames = titleNamesByPlayer.get(t.player_id)!
+    playerTitleNames.set(t.title_name, (playerTitleNames.get(t.title_name) || 0) + 1)
+  }
+  
+  for (const [playerId, titleNames] of titleNamesByPlayer) {
+    for (const [titleName, count] of titleNames) {
+      if (count >= 2) { // Same title name in 2+ different games
+        results.push({
+          playerId,
+          titleName: 'Consistent',
+          titleDesc: `Earned "${titleName}" ${count} times across different games`,
+          isFunny: false,
+          points: 0.5
+        })
+        break // Only give one Consistent award per player
+      }
+    }
+  }
+
+  // --- 😂 Comic Relief — most funny titles (is_funny=true) ---
   const funnyTitleCount = new Map<string, number>()
   for (const t of titleList) {
     if (t.is_funny) {
@@ -211,14 +159,14 @@ export async function calculateGlobalTitles(tournamentId: string): Promise<Globa
   }
   if (funnyTitleCount.size > 0) {
     const maxFunny = Math.max(...funnyTitleCount.values())
-    if (maxFunny > 0) {
+    if (maxFunny >= 1) { // Only award if count >= 1
       for (const [playerId, count] of funnyTitleCount) {
         if (count === maxFunny) {
           results.push({
             playerId,
-            titleName: 'Class Clown',
+            titleName: 'Comic Relief',
             titleDesc: `Earned the most funny titles (${count})`,
-            isFunny: true,
+            isFunny: true, // Comic Relief is funny
             points: 0.5
           })
         }

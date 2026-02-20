@@ -41,7 +41,11 @@ interface GameStore {
   selectedPlayer: PlayerDetail | null
   
   // Sprint 7: Ceremony state
-  ceremonyPhase: 'loading' | 'global-titles' | 'winner-reveal' | 'summary'
+  globalTitles: (Title & { playerName: string })[]
+  winningTeam: Team | null
+  isTied: boolean
+  ceremonyPhase: 'loading' | 'global_titles' | 'winner' | 'summary'
+  ceremonyRevealIndex: number
   
   // Actions
   setTournament: (tournament: Tournament) => void
@@ -99,6 +103,13 @@ interface GameStore {
   setSelectedPlayer: (detail: PlayerDetail | null) => void
   clearSelectedPlayer: () => void
   
+  // Sprint 7: Ceremony actions
+  setGlobalTitles: (titles: (Title & { playerName: string })[]) => void
+  setWinningTeam: (team: Team | null) => void
+  setIsTied: (tied: boolean) => void
+  setCeremonyPhase: (phase: 'loading' | 'global_titles' | 'winner' | 'summary') => void
+  nextCeremonyReveal: () => void
+  
   // Legacy actions (keeping for existing functionality)
   setTeam: (playerId: string, teamId: string) => void
   setGame: (game: Game) => void
@@ -139,6 +150,13 @@ const useGameStore = create<GameStore>((set) => ({
   // Sprint 6: Scoreboard initial state
   scoreboardData: null,
   selectedPlayer: null,
+  
+  // Sprint 7: Ceremony initial state
+  globalTitles: [],
+  winningTeam: null,
+  isTied: false,
+  ceremonyPhase: 'loading',
+  ceremonyRevealIndex: 0,
   
   // Actions
   setTournament: (tournament) => set({ tournament }),
@@ -269,15 +287,25 @@ const useGameStore = create<GameStore>((set) => ({
   
   setIsLastGame: (isLast) => set({ isLastGame: isLast }),
   
-  // Sprint 7: Ceremony initial state
-  ceremonyPhase: 'loading',
-  
   // Sprint 6: Scoreboard action implementations
   setScoreboardData: (data) => set({ scoreboardData: data }),
   
   setSelectedPlayer: (detail) => set({ selectedPlayer: detail }),
   
   clearSelectedPlayer: () => set({ selectedPlayer: null }),
+  
+  // Sprint 7: Ceremony action implementations
+  setGlobalTitles: (titles) => set({ globalTitles: titles }),
+  
+  setWinningTeam: (team) => set({ winningTeam: team }),
+  
+  setIsTied: (tied) => set({ isTied: tied }),
+  
+  setCeremonyPhase: (phase) => set({ ceremonyPhase: phase }),
+  
+  nextCeremonyReveal: () => set((state) => ({
+    ceremonyRevealIndex: state.ceremonyRevealIndex + 1
+  })),
   
   // Legacy actions (keeping for existing functionality)
   setTeam: (playerId, teamId) => set((state) => ({
@@ -322,7 +350,13 @@ const useGameStore = create<GameStore>((set) => ({
     isLastGame: false,
     // Reset Sprint 6 state too
     scoreboardData: null,
-    selectedPlayer: null
+    selectedPlayer: null,
+    // Reset Sprint 7 state too
+    globalTitles: [],
+    winningTeam: null,
+    isTied: false,
+    ceremonyPhase: 'loading',
+    ceremonyRevealIndex: 0
   })
 }))
 
