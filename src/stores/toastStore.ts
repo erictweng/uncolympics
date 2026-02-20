@@ -17,7 +17,9 @@ const useToastStore = create<ToastStore>((set, get) => ({
   toasts: [],
   
   addToast: (message, type = 'info', duration = 4000) => {
-    const id = crypto.randomUUID()
+    const id = typeof crypto.randomUUID === 'function'
+      ? crypto.randomUUID()
+      : Math.random().toString(36).slice(2) + Date.now().toString(36)
     const toast: Toast = { id, message, type, duration }
     
     set((state) => ({
