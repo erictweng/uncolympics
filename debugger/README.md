@@ -26,6 +26,9 @@ Each bug file includes:
 | 008 | [game_types Missing created_at](008-game-types-missing-created-at.md) | ⚠️ Medium | 3 | ✅ Fixed |
 | 009 | [Duplicate Game Pick No Constraint](009-duplicate-game-pick-no-constraint.md) | ⚠️ Medium | 3 | ✅ Fixed |
 | 010 | [Games Missing DELETE Policy](010-games-missing-delete-policy.md) | ⚠️ Medium | 3 | ✅ Fixed |
+| 011 | [player_stats No UPDATE Policy](011-player-stats-no-update-policy.md) | 🔴 Critical | 4 | ✅ Fixed |
+| 012 | [Spectator Can Submit Stats](012-spectator-can-submit-stats.md) | ⚠️ Medium | 4 | ✅ Fixed |
+| 013 | [player_stats Realtime](013-player-stats-realtime.md) | ⚠️ Medium | 4 | ✅ Fixed |
 
 ## Process (v1)
 
