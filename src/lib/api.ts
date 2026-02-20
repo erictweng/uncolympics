@@ -1569,6 +1569,81 @@ export async function saveGlobalTitles(
 
 // Sprint 8: History Functions
 
+export async function fetchTournamentHistory(): Promise<{
+  tournament: Tournament;
+  teams: { name: string; total_points: number }[];
+  winningTeam: { name: string; total_points: number } | null;
+  isTied: boolean;
+}[]> {
+  const { data: tournaments, error } = await supabase
+    .from('tournaments')
+    .select('*')
+    .eq('status', 'completed')
+    .order('created_at', { ascending: false });
+
+  if (error) throw new Error(`Failed to fetch tournament history: ${error.message}`);
+  if (!tournaments || tournaments.length === 0) return [];
+
+  const results = [];
+
+  for (const tournament of tournaments) {
+    // Get teams with total_points
+    const { data: teams } = await supabase
+      .from('teams')
+      .select('name, total_points')
+      .eq('tournament_id', tournament.id)
+      .order('total_points', { ascending: false });
+
+    const teamList = teams || [];
+    
+    // Determine winner (highest total_points team, or tie)
+    let winningTeam: { name: string; total_points: number } | null = null;
+    let isTied = false;
+    
+    if (teamList.length >= 2) {
+      if (teamList[0].total_points > teamList[1].total_points) {
+        winningTeam = teamList[0];
+      } else if (teamList[0].total_points === teamList[1].total_points) {
+        isTied = true;
+      }
+    } else if (teamList.length === 1) {
+      winningTeam = teamList[0];
+    }
+
+    results.push({
+      tournament,
+      teams: teamList,
+      winningTeam,
+      isTied
+    });
+  }
+
+  return results;
+}
+
+export async function fetchTournamentDetail(tournamentId: string): Promise<{
+  tournament: Tournament;
+  teams: Team[];
+  players: Player[];
+  games: GameWithType[];
+  titles: TitleWithPlayer[];
+  winningTeam: Team | null;
+  isTied: boolean;
+}> {
+  // Use the same comprehensive data as fetchCeremonyData
+  const ceremonyData = await fetchCeremonyData(tournamentId);
+  
+  return {
+    tournament: ceremonyData.tournament,
+    teams: ceremonyData.teams,
+    players: ceremonyData.players,
+    games: ceremonyData.games,
+    titles: ceremonyData.allTitles,
+    winningTeam: ceremonyData.winningTeam,
+    isTied: ceremonyData.isTied
+  };
+}
+
 export async function fetchHistory(): Promise<TournamentSummary[]> {
   const { data: tournaments, error } = await supabase
     .from('tournaments')
@@ -1624,25 +1699,24 @@ export async function fetchTournamentRecap(tournamentId: string): Promise<Tourna
   };
 }
 
-export async function createCustomGameType(
-  tournamentId: string,
-  name: string,
-  emoji: string,
-  description: string,
-  playerInputs: any[],
-  refereeInputs: any[],
-  titleDefinitions: any[]
-): Promise<GameType> {
+export async function createCustomGameType(tournamentId: string, gameData: {
+  name: string;
+  emoji: string;
+  description: string;
+  playerInputs: { key: string; label: string; type: 'number' | 'boolean'; min?: number; max?: number }[];
+  refereeInputs: { key: string; label: string; type: 'team_select' | 'player_select' | 'team_scores' | 'player_times' }[];
+  titleDefinitions: { name: string; desc: string; isFunny: boolean; condition: { type: string; stat: string; value?: number } }[];
+}): Promise<GameType> {
   const { data, error } = await supabase
     .from('game_types')
     .insert({
       tournament_id: tournamentId,
-      name,
-      emoji,
-      description,
-      player_inputs: playerInputs,
-      referee_inputs: refereeInputs,
-      title_definitions: titleDefinitions
+      name: gameData.name,
+      emoji: gameData.emoji,
+      description: gameData.description,
+      player_inputs: gameData.playerInputs,
+      referee_inputs: gameData.refereeInputs,
+      title_definitions: gameData.titleDefinitions
     })
     .select()
     .single();

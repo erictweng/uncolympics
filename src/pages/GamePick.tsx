@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import useGameStore from '../stores/gameStore'
 import { subscribeTournament } from '../lib/sync'
 import { fetchAvailableGames, fetchPickState, pickGame } from '../lib/api'
+import CustomGameCreator from '../components/game/CustomGameCreator'
 import type { GameType, Game } from '../types'
 
 interface ConfirmModalProps {
@@ -65,6 +66,7 @@ function GamePick() {
   const [selectedGame, setSelectedGame] = useState<GameType | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [showCustomGameCreator, setShowCustomGameCreator] = useState(false)
   
   const {
     tournament,
@@ -146,6 +148,20 @@ function GamePick() {
     }
   }
 
+  // Handle custom game creation
+  const handleCustomGameCreated = async () => {
+    setShowCustomGameCreator(false)
+    // Refresh available games to include the new custom game
+    if (tournament?.id) {
+      try {
+        const gamesData = await fetchAvailableGames(tournament.id)
+        setAvailableGames(gamesData.available)
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Failed to refresh games')
+      }
+    }
+  }
+
   if (loading) {
     return (
       <div className="min-h-screen bg-black flex items-center justify-center">
@@ -178,6 +194,7 @@ function GamePick() {
     .find(player => player.team_id === currentPickTeam && player.is_leader)
   
   const isCurrentLeader = currentPlayer?.id === currentLeader?.id
+  const isReferee = currentPlayer?.role === 'referee'
   const totalRounds = tournament?.num_games || 0
   
   // Determine team color - first team is cyan, second is pink
@@ -256,6 +273,18 @@ function GamePick() {
               No games available to pick
             </div>
           )}
+
+          {/* Custom Game Creator Button - Only for Referee */}
+          {isReferee && (
+            <div className="mt-6 text-center">
+              <button
+                onClick={() => setShowCustomGameCreator(true)}
+                className="px-6 py-3 bg-purple-600 hover:bg-purple-500 text-white font-medium rounded-lg transition-colors shadow-lg shadow-purple-500/20 border border-purple-500"
+              >
+                + Create Custom Game
+              </button>
+            </div>
+          )}
         </div>
 
         {/* Already Picked Games */}
@@ -298,6 +327,16 @@ function GamePick() {
         onConfirm={() => selectedGame && handleGamePick(selectedGame)}
         onCancel={() => setSelectedGame(null)}
       />
+
+      {/* Custom Game Creator Modal */}
+      {tournament?.id && (
+        <CustomGameCreator
+          isOpen={showCustomGameCreator}
+          tournamentId={tournament.id}
+          onClose={() => setShowCustomGameCreator(false)}
+          onGameCreated={handleCustomGameCreated}
+        />
+      )}
     </div>
   )
 }

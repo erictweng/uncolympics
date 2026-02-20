@@ -30,6 +30,15 @@ function Home() {
             JOIN TOURNAMENT
           </button>
         </Link>
+
+        {/* Tournament History Link */}
+        <div className="mt-8">
+          <Link to="/history">
+            <button className="w-full max-w-md bg-transparent hover:bg-gray-800 text-gray-400 hover:text-white border border-gray-600 hover:border-gray-500 font-medium text-lg py-4 px-8 rounded-lg transition-all duration-300">
+              📜 Past Tournaments
+            </button>
+          </Link>
+        </div>
       </div>
 
       {/* Footer Text */}
