@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import useGameStore from '../stores/gameStore'
 import { fetchScoreboard, fetchPlayerDetail, validateRoomCode } from '../lib/api'
+import { LoadingSpinner } from '../components/ui/LoadingSpinner'
 
 function Scoreboard() {
   const { roomCode } = useParams<{ roomCode: string }>()
@@ -61,12 +62,13 @@ function Scoreboard() {
     }
   }
 
+  // Update document title
+  useEffect(() => {
+    document.title = 'UNCOLYMPICS - Scoreboard';
+  }, []);
+  
   if (!scoreboardData) {
-    return (
-      <div className="text-center py-8">
-        <div className="text-accent-primary text-xl">Loading scoreboard...</div>
-      </div>
-    )
+    return <LoadingSpinner message="Loading scoreboard..." />;
   }
 
   const { teams, games, titleLeaderboard, players } = scoreboardData

@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import useGameStore from '../stores/gameStore'
+import { LoadingSpinner } from '../components/ui/LoadingSpinner'
 import { subscribeTournament } from '../lib/sync'
 import { fetchAvailableGames, fetchPickState, pickGame } from '../lib/api'
 import CustomGameCreator from '../components/game/CustomGameCreator'
@@ -162,15 +163,13 @@ function GamePick() {
     }
   }
 
+  // Update document title
+  useEffect(() => {
+    document.title = 'UNCOLYMPICS - Game Pick';
+  }, []);
+  
   if (loading) {
-    return (
-      <div className="min-h-screen bg-black flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-cyan-400 mx-auto mb-4"></div>
-          <p className="text-gray-400">Loading games...</p>
-        </div>
-      </div>
-    )
+    return <LoadingSpinner message="Loading games..." />;
   }
 
   if (error) {

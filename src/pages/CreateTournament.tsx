@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { createTournament } from '../lib/api'
 import { getOrCreateDeviceId } from '../lib/device'
@@ -7,6 +7,10 @@ import useGameStore from '../stores/gameStore'
 function CreateTournament() {
   const navigate = useNavigate()
   const { setTournament, setCurrentPlayer } = useGameStore()
+  
+  useEffect(() => {
+    document.title = 'UNCOLYMPICS - Create Tournament';
+  }, []);
   
   const [formData, setFormData] = useState({
     tournamentName: '',
@@ -150,22 +154,22 @@ function CreateTournament() {
           <label htmlFor="numGames" className="block text-xl font-semibold text-accent-primary mb-3">
             Number of Games
           </label>
-          <div className="flex items-center space-x-4">
+          <div className="flex items-center justify-center space-x-6">
             <button
               type="button"
               onClick={() => formData.numGames > 1 && handleInputChange('numGames', formData.numGames - 1)}
-              className="bg-accent-primary text-black font-bold text-2xl w-12 h-12 rounded-lg hover:bg-accent-secondary transition-colors"
+              className="bg-accent-primary text-black font-bold text-2xl w-14 h-14 rounded-lg hover:bg-accent-secondary transition-colors"
               disabled={formData.numGames <= 1}
             >
               -
             </button>
-            <div className="flex-1 text-center">
-              <span className="text-3xl font-bold text-accent-primary">{formData.numGames}</span>
+            <div className="min-w-20 text-center">
+              <span className="text-4xl font-bold text-accent-primary">{formData.numGames}</span>
             </div>
             <button
               type="button"
               onClick={() => formData.numGames < 10 && handleInputChange('numGames', formData.numGames + 1)}
-              className="bg-accent-primary text-black font-bold text-2xl w-12 h-12 rounded-lg hover:bg-accent-secondary transition-colors"
+              className="bg-accent-primary text-black font-bold text-2xl w-14 h-14 rounded-lg hover:bg-accent-secondary transition-colors"
               disabled={formData.numGames >= 10}
             >
               +

@@ -1,9 +1,14 @@
 import { Link } from 'react-router-dom'
+import { useEffect } from 'react'
 import { useReconnect } from '../hooks/useReconnect'
 
 function Home() {
   // Attempt to reconnect user on page load
   useReconnect()
+  
+  useEffect(() => {
+    document.title = 'UNCOLYMPICS - Home';
+  }, []);
 
   return (
     <div className="text-center space-y-12">

@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { useParams } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import useGameStore from '../stores/gameStore'
+import { LoadingSpinner } from '../components/ui/LoadingSpinner'
 import { fetchTitlesForGame, saveTitles, updateTeamPoints, advanceToNextRound } from '../lib/api'
 import { calculateTitles } from '../lib/titles'
 import { subscribeGame, subscribeTournament } from '../lib/sync'
@@ -158,19 +159,14 @@ function TitleReveal() {
   const teamScores = calculateRunningScores()
   const currentTitle = gameTitles[revealIndex]
   
+  // Update document title
+  useEffect(() => {
+    document.title = 'UNCOLYMPICS - Title Reveal';
+  }, []);
+  
   // Loading state
   if (loading || calculating) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-purple-900 via-blue-900 to-indigo-900 text-white flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-pulse text-6xl mb-4">🏆</div>
-          <h1 className="text-2xl font-bold mb-2">
-            {calculating ? 'Calculating titles...' : 'Loading titles...'}
-          </h1>
-          <p className="text-gray-300">Please wait while we process the results</p>
-        </div>
-      </div>
-    )
+    return <LoadingSpinner message={calculating ? 'Calculating titles...' : 'Loading titles...'} />;
   }
   
   // Error state

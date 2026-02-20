@@ -1,6 +1,7 @@
 import { ReactNode } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 import useGameStore from '../stores/gameStore'
+import { ConnectionBanner } from './ui/ConnectionBanner'
 
 interface LayoutProps {
   children: ReactNode
@@ -15,6 +16,7 @@ function Layout({ children }: LayoutProps) {
   
   return (
     <div className="min-h-screen bg-primary">
+      <ConnectionBanner />
       {/* Header */}
       <header className="bg-secondary border-b-2 border-accent-primary">
         <div className="max-w-4xl mx-auto px-4 py-6 relative">

@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { fetchTournamentHistory, fetchTournamentDetail } from '../lib/api'
+import { LoadingSpinner } from '../components/ui/LoadingSpinner'
 import type { Tournament, Team, Player, GameWithType, TitleWithPlayer } from '../types'
 
 interface TournamentHistoryEntry {
@@ -74,15 +75,13 @@ function History() {
     return `${teams[0].name}: ${teams[0].total_points} (winner)`
   }
 
+  // Update document title
+  useEffect(() => {
+    document.title = 'UNCOLYMPICS - History';
+  }, []);
+  
   if (loading) {
-    return (
-      <div className="min-h-screen bg-black flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-cyan-400 mx-auto mb-4"></div>
-          <p className="text-gray-400">Loading tournament history...</p>
-        </div>
-      </div>
-    )
+    return <LoadingSpinner message="Loading tournament history..." />;
   }
 
   if (error && tournaments.length === 0) {

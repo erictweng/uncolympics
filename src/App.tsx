@@ -1,5 +1,8 @@
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom'
+import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom'
+import { AnimatePresence } from 'framer-motion'
+import { useEffect } from 'react'
 import Layout from './components/Layout'
+import { PageTransition } from './components/PageTransition'
 
 // Import page components
 import Home from './pages/Home'
@@ -13,22 +16,35 @@ import Scoreboard from './pages/Scoreboard'
 import Ceremony from './pages/Ceremony'
 import History from './pages/History'
 
+function ScrollToTop() {
+  const { pathname } = useLocation();
+  
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [pathname]);
+  
+  return null;
+}
+
 function App() {
   return (
     <Router>
+      <ScrollToTop />
       <Layout>
-        <Routes>
-          <Route path="/" element={<Home />} />
-          <Route path="/create" element={<CreateTournament />} />
-          <Route path="/join" element={<JoinTournament />} />
-          <Route path="/lobby/:roomCode" element={<Lobby />} />
-          <Route path="/game/:roomCode/pick" element={<GamePick />} />
-          <Route path="/game/:roomCode/play/:gameId" element={<GamePlay />} />
-          <Route path="/game/:roomCode/reveal/:gameId" element={<TitleReveal />} />
-          <Route path="/scoreboard/:roomCode" element={<Scoreboard />} />
-          <Route path="/ceremony/:roomCode" element={<Ceremony />} />
-          <Route path="/history" element={<History />} />
-        </Routes>
+        <AnimatePresence mode="wait">
+          <Routes>
+            <Route path="/" element={<PageTransition><Home /></PageTransition>} />
+            <Route path="/create" element={<PageTransition><CreateTournament /></PageTransition>} />
+            <Route path="/join" element={<PageTransition><JoinTournament /></PageTransition>} />
+            <Route path="/lobby/:roomCode" element={<PageTransition><Lobby /></PageTransition>} />
+            <Route path="/game/:roomCode/pick" element={<PageTransition><GamePick /></PageTransition>} />
+            <Route path="/game/:roomCode/play/:gameId" element={<PageTransition><GamePlay /></PageTransition>} />
+            <Route path="/game/:roomCode/reveal/:gameId" element={<PageTransition><TitleReveal /></PageTransition>} />
+            <Route path="/scoreboard/:roomCode" element={<PageTransition><Scoreboard /></PageTransition>} />
+            <Route path="/ceremony/:roomCode" element={<PageTransition><Ceremony /></PageTransition>} />
+            <Route path="/history" element={<PageTransition><History /></PageTransition>} />
+          </Routes>
+        </AnimatePresence>
       </Layout>
     </Router>
   )

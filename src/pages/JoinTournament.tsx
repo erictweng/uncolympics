@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { joinTournament } from '../lib/api'
 import { getOrCreateDeviceId } from '../lib/device'
@@ -7,6 +7,10 @@ import useGameStore from '../stores/gameStore'
 function JoinTournament() {
   const navigate = useNavigate()
   const { setTournament, setCurrentPlayer } = useGameStore()
+  
+  useEffect(() => {
+    document.title = 'UNCOLYMPICS - Join Tournament';
+  }, []);
   
   const [formData, setFormData] = useState({
     roomCode: '',
@@ -127,7 +131,7 @@ function JoinTournament() {
           <label className="block text-xl font-semibold text-accent-secondary mb-3">
             Join as
           </label>
-          <div className="flex space-x-4">
+          <div className="flex flex-col md:flex-row space-y-3 md:space-y-0 md:space-x-4">
             <button
               type="button"
               onClick={() => handleInputChange('role', 'player')}

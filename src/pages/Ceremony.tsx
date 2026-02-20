@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import useGameStore from '../stores/gameStore'
+import { LoadingSpinner } from '../components/ui/LoadingSpinner'
 import { fetchCeremonyData, saveGlobalTitles, updateTeamPoints, validateRoomCode } from '../lib/api'
 import { calculateGlobalTitles } from '../lib/globalTitles'
 import Confetti from '../components/animation/Confetti'
@@ -127,23 +128,14 @@ function Ceremony() {
     }
   }
 
+  // Update document title
+  useEffect(() => {
+    document.title = 'UNCOLYMPICS - Ceremony';
+  }, []);
+  
   // LOADING: "Preparing ceremony..." (referee calculating)
   if (ceremonyPhase === 'loading') {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-gray-900 via-black to-gray-800 text-white flex items-center justify-center">
-        <div className="text-center">
-          <motion.div
-            className="text-7xl mb-6"
-            animate={{ rotate: [0, 10, -10, 0], scale: [1, 1.1, 1] }}
-            transition={{ duration: 2, repeat: Infinity }}
-          >
-            🏆
-          </motion.div>
-          <h1 className="text-3xl font-black mb-2 text-yellow-400">Preparing ceremony...</h1>
-          <p className="text-gray-400">Referee calculating global awards</p>
-        </div>
-      </div>
-    )
+    return <LoadingSpinner message="Preparing ceremony..." />;
   }
 
   if (error) {

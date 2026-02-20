@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import useGameStore from '../stores/gameStore'
+import { LoadingSpinner } from '../components/ui/LoadingSpinner'
 import { subscribeTournament } from '../lib/sync'
 import { 
   fetchLobbyState, 
@@ -78,6 +79,11 @@ function Lobby() {
       navigate(`/game/${roomCode}/pick`)
     }
   }, [tournament?.status, roomCode, navigate])
+  
+  // Update document title
+  useEffect(() => {
+    document.title = `UNCOLYMPICS - Lobby ${roomCode || ''}`;
+  }, [roomCode]);
 
   // Team helper functions
   const getTeamPlayers = (teamId: string): Player[] => {
@@ -167,11 +173,7 @@ function Lobby() {
   }
 
   if (isLoading) {
-    return (
-      <div className="min-h-screen bg-black text-white flex items-center justify-center">
-        <div className="text-xl">Loading lobby...</div>
-      </div>
-    )
+    return <LoadingSpinner message="Loading lobby..." />;
   }
 
   if (!tournament || !currentPlayer) {

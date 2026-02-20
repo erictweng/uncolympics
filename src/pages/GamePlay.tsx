@@ -5,6 +5,7 @@ import { fetchGameState, submitPlayerStats, submitGameResult, endGame } from '..
 import { subscribeGame } from '../lib/sync';
 import DynamicStatInput from '../components/game/DynamicStatInput';
 import DynamicRefereeInput from '../components/game/DynamicRefereeInput';
+import { LoadingSpinner } from '../components/ui/LoadingSpinner';
 import type { GameType } from '../types';
 
 interface StatInputDef {
@@ -203,15 +204,15 @@ function GamePlay() {
     }
   };
 
+  // Update document title
+  useEffect(() => {
+    if (gameType) {
+      document.title = `UNCOLYMPICS - ${gameType.name}`;
+    }
+  }, [gameType]);
+  
   if (loading) {
-    return (
-      <div className="min-h-screen bg-gray-900 text-white flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto mb-4"></div>
-          <p className="text-lg">Loading game...</p>
-        </div>
-      </div>
-    );
+    return <LoadingSpinner message="Loading game..." />;
   }
 
   if (!gameType || !currentGame) {
