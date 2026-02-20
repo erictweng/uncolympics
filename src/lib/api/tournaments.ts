@@ -96,14 +96,14 @@ export async function joinTournament(
   const tournament = validation.tournament
   if (tournament.status !== 'lobby') throw new Error('Tournament has already started')
 
-  const { data: existingPlayer } = await supabase
+  const { data: existingPlayers } = await supabase
     .from('players')
     .select('*')
     .eq('tournament_id', tournament.id)
     .eq('device_id', deviceId)
-    .single()
+    .limit(1)
 
-  if (existingPlayer) return { tournament, player: existingPlayer }
+  if (existingPlayers && existingPlayers.length > 0) return { tournament, player: existingPlayers[0] }
 
   const { data: player, error } = await supabase
     .from('players')
@@ -130,10 +130,10 @@ export async function reconnectPlayer(
     .select(`*, tournament:tournaments!inner(*)`)
     .eq('device_id', deviceId)
     .neq('tournament.status', 'completed')
-    .single()
+    .limit(1)
 
-  if (error || !data) return null
-  return { tournament: data.tournament as Tournament, player: data as Player }
+  if (error || !data || data.length === 0) return null
+  return { tournament: data[0].tournament as Tournament, player: data[0] as Player }
 }
 
 export async function startTournament(tournamentId: string): Promise<Tournament> {
