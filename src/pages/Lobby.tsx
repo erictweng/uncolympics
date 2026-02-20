@@ -132,7 +132,7 @@ function Lobby() {
   })
 
   if (isLoading) {
-    return <LoadingSpinner message="Loading lobby..." />;
+    return <div className="min-h-screen" />;
   }
 
   if (!tournament || !currentPlayer) {
