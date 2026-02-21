@@ -55,23 +55,16 @@ export function subscribeTournament(tournamentId: string) {
       if (payload.eventType === 'UPDATE') {
         // Handle status changes (lobby→picking) and other tournament updates
         const tournament = payload.new as Tournament;
-        console.log('[SYNC] Tournament UPDATE received:', tournament.status, tournament.room_code);
-        
         store.setTournament(tournament);
         
-        // Also update lobbyStore directly
-        console.log('[SYNC] Updating lobbyStore with tournament:', tournament.status);
+        // Also update lobbyStore directly (fixes sync issue)
         useLobbyStore.getState().setTournament(tournament);
 
         // Handle navigation based on tournament status changes
         if (tournament.status === 'team_select') {
           const currentUrl = window.location.pathname;
-          console.log('[SYNC] Tournament status is team_select, current URL:', currentUrl);
           if (!currentUrl.includes('/team-select')) {
-            console.log('[SYNC] Navigating to team-select:', `/team-select/${tournament.room_code}`);
             appNavigate(`/team-select/${tournament.room_code}`);
-          } else {
-            console.log('[SYNC] Already on team-select page, skipping navigation');
           }
         } else if (tournament.status === 'picking') {
           // Navigate to pick page
