@@ -8,6 +8,8 @@ import { useReconnect } from '../hooks/useReconnect'
 
 type Phase = 'choosing' | 'locked' | 'shuffling' | 'revealed'
 
+const entranceDelay = 0.3 // base delay after page load
+
 function TeamSelection() {
   useParams<{ roomCode: string }>()
   const navigate = useNavigate()
@@ -80,25 +82,24 @@ function TeamSelection() {
   const handlePanelTap = async (teamId: string) => {
     if (isLockedIn || phase !== 'choosing' || !currentPlayer) return
 
-    if (selectedTeamId === teamId) {
-      // Second tap — lock in
-      try {
-        await joinTeam(currentPlayer.id, teamId)
-        setIsLockedIn(true)
-        setPhase('locked')
-        // Track lock-in timestamp for ordering
-        setLockInOrder(prev => ({
-          ...prev,
-          [currentPlayer.id]: Date.now()
-        }))
-        // Update local player state
-        updatePlayer({ ...currentPlayer, team_id: teamId })
-      } catch (err) {
-        toast.error('Failed to lock in')
-      }
-    } else {
-      // First tap — select
+    // Single tap — immediately lock in
+    try {
       setSelectedTeamId(teamId)
+      setIsLockedIn(true)
+      setPhase('locked')
+      setLockInOrder(prev => ({
+        ...prev,
+        [currentPlayer.id]: Date.now()
+      }))
+      updatePlayer({ ...currentPlayer, team_id: teamId })
+      await joinTeam(currentPlayer.id, teamId)
+    } catch (err) {
+      // Revert on failure
+      setSelectedTeamId(null)
+      setIsLockedIn(false)
+      setPhase('choosing')
+      updatePlayer({ ...currentPlayer, team_id: null })
+      toast.error('Failed to lock in')
     }
   }
 
@@ -213,29 +214,24 @@ function TeamSelection() {
           <motion.div
             layoutId="current-player-name"
             className="text-white text-lg font-body font-semibold"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.4, ease: 'easeOut' }}
           >
             {currentPlayer.name}
           </motion.div>
         )}
         
-        {/* Other players fade in ONLY after current player locks in */}
+        {/* Other locked-in players — fade+slide from bottom, invisible until they lock in */}
         <AnimatePresence>
           {isLockedIn && otherPlayers.map((p, index) => (
             <motion.div
               key={p.id}
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ 
-                opacity: 1, 
-                y: 0,
-                // Push down if current player is also in this team
-                marginTop: (currentPlayer?.team_id === teamId && index === 0) ? 8 : 0
-              }}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
               transition={{ 
                 duration: 0.5, 
-                delay: 0.3 + (index * 0.1),
+                delay: index * 0.1,
                 ease: 'easeOut'
               }}
               className="text-white text-lg font-body"
@@ -275,8 +271,7 @@ function TeamSelection() {
 
   const statusMessage = () => {
     if (phase === 'choosing') {
-      if (!selectedTeamId) return 'Tap a panel to join'
-      return 'Tap again to confirm'
+      return 'Tap a team to lock in'
     }
     if (phase === 'locked') {
       if (isReferee && allLockedIn) return ''
@@ -296,11 +291,11 @@ function TeamSelection() {
         connectionStatus === 'reconnecting' ? 'bg-yellow-400' : 'bg-red-400'
       }`} />
 
-      {/* Header */}
+      {/* Header — slides in from right */}
       <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ duration: 0.3, delay: 0.4 }}
+        initial={{ opacity: 0, x: 120 }}
+        animate={{ opacity: 1, x: 0 }}
+        transition={{ duration: 0.5, delay: entranceDelay, ease: 'easeOut' }}
         className="mb-6"
       >
         <h1 className="font-heading text-3xl text-white leading-tight">
@@ -308,33 +303,27 @@ function TeamSelection() {
         </h1>
       </motion.div>
 
-      {/* Player name above panels OR sliding into selected panel */}
+      {/* Player name — slides in from bottom */}
       {phase === 'choosing' && !isLockedIn && (
         <motion.div className="text-center mb-6">
-          {!selectedTeamId ? (
-            // Name at top when no selection
-            <motion.div
-              layoutId="current-player-name"
-              className="text-white text-2xl font-heading"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.4, ease: 'easeOut' }}
-            >
-              {currentPlayer.name}
-            </motion.div>
-          ) : (
-            // Invisible placeholder when name has moved to panel
-            <div className="h-8" />
-          )}
+          <motion.div
+            layoutId="current-player-name"
+            className="text-white text-2xl font-heading"
+            initial={{ opacity: 0, y: 60 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: entranceDelay + 0.3, ease: 'easeOut' }}
+          >
+            {currentPlayer.name}
+          </motion.div>
         </motion.div>
       )}
 
-      {/* Team panels */}
+      {/* Team panels — fade in after header + name */}
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
-        transition={{ duration: 0.3, delay: 0.2 }}
-        className="flex gap-3 flex-1 max-h-[60vh]"
+        transition={{ duration: 0.5, delay: entranceDelay + 0.6 }}
+        className="flex gap-3 flex-1 max-h-[30vh]"
       >
         {teams.slice(0, 2).map((team, idx) => {
           const isSelected = selectedTeamId === team.id
@@ -348,15 +337,12 @@ function TeamSelection() {
               style={{
                 background: 'rgba(255,255,255,0.05)',
                 backdropFilter: 'blur(12px)',
-                border: isSelected && !isLockedIn
-                  ? '2px solid rgba(255,255,255,0.6)'
+                border: isSelected && isLockedIn
+                  ? '2px solid rgba(255,255,255,0.4)'
                   : '1px solid rgba(255,255,255,0.1)',
-                boxShadow: isSelected && !isLockedIn
-                  ? '0 0 30px rgba(255,255,255,0.25), inset 0 0 20px rgba(255,255,255,0.1)'
-                  : 'none',
               }}
               animate={{
-                scale: isSelected && !isLockedIn ? 1.02 : 1,
+                scale: 1,
               }}
               transition={{ duration: 0.2 }}
             >
@@ -365,64 +351,11 @@ function TeamSelection() {
                 {team.name.toUpperCase()}
               </div>
 
-              {/* Current player name sliding into selected panel */}
-              {isSelected && !isLockedIn && phase === 'choosing' && (
-                <motion.div
-                  layoutId="current-player-name"
-                  className="text-white text-xl font-heading mb-2"
-                  transition={{ 
-                    type: 'spring',
-                    stiffness: 300,
-                    damping: 30,
-                    duration: 0.5
-                  }}
-                >
-                  {currentPlayer.name}
-                </motion.div>
-              )}
-
-              {/* Lock in prompt */}
-              {isSelected && !isLockedIn && (
-                <motion.div
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  className="text-white/70 text-sm font-body mb-4"
-                >
-                  Lock in?
-                </motion.div>
-              )}
-
               {/* Player names in this team */}
               <div className="flex flex-col items-center gap-2 flex-1">
                 {renderTeamNames(teamPlayers, team.id)}
               </div>
 
-              {/* Dust particles when selected */}
-              {isSelected && !isLockedIn && (
-                <>
-                  {[...Array(6)].map((_, i) => (
-                    <motion.div
-                      key={i}
-                      className="absolute w-1 h-1 rounded-full bg-white/30"
-                      initial={{
-                        x: '50%',
-                        y: '50%',
-                        opacity: 0.6,
-                      }}
-                      animate={{
-                        x: `${20 + Math.random() * 60}%`,
-                        y: `${20 + Math.random() * 60}%`,
-                        opacity: 0,
-                      }}
-                      transition={{
-                        duration: 1.5 + Math.random(),
-                        repeat: Infinity,
-                        delay: Math.random() * 0.5,
-                      }}
-                    />
-                  ))}
-                </>
-              )}
             </motion.div>
           )
         })}

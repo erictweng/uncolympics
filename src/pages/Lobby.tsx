@@ -20,6 +20,7 @@ function Lobby() {
   const navigate = useNavigate()
   const [error, setError] = useState<string | null>(null)
   const [showConfirmModal, setShowConfirmModal] = useState(false)
+  const [exiting, setExiting] = useState(false)
 
   // Single reconnect hook handles: fetch state, set up realtime, redirect if needed
   // shouldNavigate=true so if tournament moved past lobby, we redirect
@@ -56,16 +57,27 @@ function Lobby() {
     document.title = `UNCOLYMPICS - Lobby ${roomCode || ''}`;
   }, [roomCode]);
 
+  // Listen for lobby-exit event from realtime sync (non-referee players)
+  useEffect(() => {
+    const handleExit = () => setExiting(true)
+    window.addEventListener('lobby-exit', handleExit)
+    return () => window.removeEventListener('lobby-exit', handleExit)
+  }, [])
+
   // Leader assignment now happens in TeamSelection via random shuffle
 
   const handleStartTournament = async () => {
     if (!tournament || !roomCode) return
-    // Update status so all players navigate to team selection
+    // Trigger exit animation, then update status
+    setExiting(true)
+    const exitDuration = players.length * 100 + 400 // stagger + base
     await supabase
       .from('tournaments')
       .update({ status: 'team_select' })
       .eq('id', tournament.id)
-    navigate(`/team-select/${roomCode}`)
+    setTimeout(() => {
+      navigate(`/team-select/${roomCode}`)
+    }, exitDuration)
   }
 
   const handleSwipeDown = () => {
@@ -171,8 +183,16 @@ function Lobby() {
         </div>
       </div>
 
-      {/* Player Names — top-left aligned, bottom-to-top slide-in */}
-      <div className="flex flex-col items-start space-y-2 w-full">
+      {/* Player Names — top-left aligned, bottom-to-top slide-in, staggered exit */}
+      <motion.div
+        className="flex flex-col items-start space-y-2 w-full"
+        variants={{
+          visible: { transition: { staggerChildren: 0.15 } },
+          exit: { transition: { staggerChildren: 0.1 } },
+        }}
+        initial="visible"
+        animate={exiting ? 'exit' : 'visible'}
+      >
         <AnimatePresence>
           {players.map((player, index) => {
             const isMe = player.id === currentPlayer.id
@@ -181,12 +201,15 @@ function Lobby() {
             return (
               <motion.div
                 key={player.id}
+                variants={{
+                  visible: { opacity: 1, y: 0 },
+                  exit: { opacity: 0, y: -40, transition: { duration: 0.35, ease: 'easeIn' } },
+                }}
                 initial={{ opacity: 0, y: 60 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: 60 }}
+                animate={exiting ? 'exit' : 'visible'}
                 transition={{ 
                   duration: 0.5,
-                  delay: isRefereePlayer ? 0.1 : 0.15 * index,
+                  delay: exiting ? index * 0.1 : (isRefereePlayer ? 0.1 : 0.15 * index),
                   ease: 'easeOut'
                 }}
               >
@@ -194,7 +217,7 @@ function Lobby() {
                   className="font-heading leading-tight"
                   style={{ 
                     fontSize: `${fontSize}vh`,
-                    color: isMe ? '#ffffff' : '#9ca3af' // white for self, light gray for others
+                    color: isMe ? '#ffffff' : '#9ca3af'
                   }}
                 >
                   {player.name}
@@ -203,7 +226,7 @@ function Lobby() {
             )
           })}
         </AnimatePresence>
-      </div>
+      </motion.div>
 
       {/* Waiting message for non-referees */}
       {!isReferee && (

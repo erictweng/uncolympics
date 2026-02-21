@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import useLobbyStore from '../stores/lobbyStore'
 import { subscribeTournament } from '../lib/sync'
@@ -46,6 +46,14 @@ export function LobbyInline({ active }: LobbyInlineProps) {
     }
   }, [active, tournament?.id])
 
+  const [exiting, setExiting] = useState(false)
+
+  useEffect(() => {
+    const handleExit = () => setExiting(true)
+    window.addEventListener('lobby-exit', handleExit)
+    return () => window.removeEventListener('lobby-exit', handleExit)
+  }, [])
+
   if (!active || !tournament) return null
 
   const roomCode = tournament.room_code
@@ -73,8 +81,12 @@ export function LobbyInline({ active }: LobbyInlineProps) {
         )}
       </AnimatePresence>
 
-      {/* Player names — slide in from below */}
-      <div className="flex flex-col items-start space-y-2 w-full">
+      {/* Player names — slide in from below, staggered exit up */}
+      <motion.div
+        className="flex flex-col items-start space-y-2 w-full"
+        initial="visible"
+        animate={exiting ? 'exit' : 'visible'}
+      >
         <AnimatePresence>
           {players.map((player, index) => {
             const isMe = player.id === currentPlayer?.id
@@ -84,7 +96,10 @@ export function LobbyInline({ active }: LobbyInlineProps) {
               <motion.div
                 key={player.id}
                 initial={{ opacity: 0, y: 60 }}
-                animate={{ opacity: 1, y: 0 }}
+                animate={exiting
+                  ? { opacity: 0, y: -40, transition: { duration: 0.35, delay: index * 0.1, ease: 'easeIn' } }
+                  : { opacity: 1, y: 0 }
+                }
                 exit={{ opacity: 0, y: 60 }}
                 transition={{
                   duration: 0.5,
@@ -105,7 +120,7 @@ export function LobbyInline({ active }: LobbyInlineProps) {
             )
           })}
         </AnimatePresence>
-      </div>
+      </motion.div>
     </div>
   )
 }

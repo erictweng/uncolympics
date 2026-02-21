@@ -53,7 +53,14 @@ export function subscribeTournament(tournamentId: string) {
         const currentUrl = window.location.pathname;
         if (tournament.status === 'team_select') {
           if (!currentUrl.includes('/team-select')) {
-            appNavigate(`/team-select/${tournament.room_code}`);
+            // Trigger lobby exit animation before navigating
+            const lobbyExitEvent = new CustomEvent('lobby-exit');
+            window.dispatchEvent(lobbyExitEvent);
+            const playerCount = useLobbyStore.getState().players.length;
+            const exitDelay = playerCount * 100 + 400;
+            setTimeout(() => {
+              appNavigate(`/team-select/${tournament.room_code}`);
+            }, exitDelay);
           }
         } else if (tournament.status === 'picking') {
           if (!currentUrl.includes('/pick')) {
