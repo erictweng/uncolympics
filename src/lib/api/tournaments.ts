@@ -223,15 +223,28 @@ export async function joinTournament(
 export async function reconnectPlayer(
   deviceId: string
 ): Promise<{ tournament: Tournament; player: Player } | null> {
+  // Two-step query: fetch player first, then check tournament status separately
+  // (inner join + .neq on joined table can silently return 0 rows in some Supabase/PostgREST versions)
   const { data, error } = await supabase
     .from('players')
-    .select(`*, tournament:tournaments!inner(*)`)
+    .select(`*, tournament:tournaments(*)`)
     .eq('device_id', deviceId)
-    .neq('tournament.status', 'completed')
-    .limit(1)
+    .order('created_at', { ascending: false })
+    .limit(5)
+
+  console.log('reconnectPlayer result:', data, error)
 
   if (error || !data || data.length === 0) return null
-  return { tournament: data[0].tournament as Tournament, player: data[0] as Player }
+
+  // Find the first player whose tournament is not completed
+  const match = data.find(
+    (row: any) => row.tournament && row.tournament.status !== 'completed'
+  )
+  if (!match) return null
+
+  // Strip the nested tournament from the player object to keep types clean
+  const { tournament: t, ...playerFields } = match as any
+  return { tournament: t as Tournament, player: playerFields as Player }
 }
 
 export async function startTournament(tournamentId: string): Promise<Tournament> {

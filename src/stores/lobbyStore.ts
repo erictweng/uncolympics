@@ -1,4 +1,5 @@
 import { create } from 'zustand'
+import { persist } from 'zustand/middleware'
 import type { Tournament, Player, Team, LeaderVote } from '../types'
 
 interface LobbyStore {
@@ -39,7 +40,7 @@ interface LobbyStore {
   setTeam: (playerId: string, teamId: string) => void
 }
 
-const useLobbyStore = create<LobbyStore>((set) => ({
+const useLobbyStore = create<LobbyStore>()(persist((set) => ({
   // Initial state
   tournament: null,
   currentPlayer: null,
@@ -116,6 +117,12 @@ const useLobbyStore = create<LobbyStore>((set) => ({
       p.id === playerId ? { ...p, team_id: teamId } : p
     )
   })),
+}), {
+  name: 'uncolympics-lobby',
+  partialize: (state) => ({
+    tournament: state.tournament,
+    currentPlayer: state.currentPlayer,
+  }),
 }))
 
 export default useLobbyStore

@@ -41,29 +41,42 @@ export function useReconnect(shouldNavigate: boolean = true): ReconnectStatus {
     hasRun.current = true
 
     const reconnect = async () => {
-      // Step 1: If we already have state, set up sync and fetch full state if needed
+      // Step 1: If we already have state (normal nav or persisted from localStorage),
+      // set up sync and always fetch fresh data for non-persisted fields
       if (tournament?.id && currentPlayer?.id) {
         // Set up realtime if not already
         if (!unsubRef.current) {
           unsubRef.current = subscribeTournament(tournament.id)
         }
 
-        // Fetch full lobby state if players list is empty (first visit from create/join)
-        const { players } = useLobbyStore.getState()
-        if (players.length === 0) {
-          try {
-            const lobbyState = await fetchLobbyState(tournament.id)
-            setPlayers(lobbyState.players)
-            setTeams(lobbyState.teams)
-            setVotes(lobbyState.votes)
-          } catch (err) {
-            console.error('Failed to fetch lobby state on first visit:', err)
-          }
+        // Always fetch full lobby state — players/teams/votes are never persisted
+        try {
+          const lobbyState = await fetchLobbyState(tournament.id)
+          setPlayers(lobbyState.players)
+          setTeams(lobbyState.teams)
+          setVotes(lobbyState.votes)
+        } catch (err) {
+          console.error('Failed to fetch lobby state on fast path:', err)
+          // Don't show expired — we still have persisted state, realtime will catch up
         }
+
+        // Validate that the tournament is still active by checking Supabase
+        // (persisted state may be stale if tournament was completed/deleted)
+        const deviceId = getOrCreateDeviceId()
+        const result = await reconnectPlayer(deviceId)
+        if (!result) {
+          // Tournament is actually gone — NOW show expired
+          setStatus('expired')
+          return
+        }
+
+        // Update tournament in case status changed since persist
+        setTournament(result.tournament)
+        setCurrentPlayer(result.player)
 
         // Still check if we need to redirect (status may have changed)
         if (shouldNavigate) {
-          navigateToStatus(tournament, navigate)
+          navigateToStatus(result.tournament, navigate)
         }
         setStatus('ready')
         return
