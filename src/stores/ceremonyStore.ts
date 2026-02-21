@@ -16,6 +16,7 @@ interface CeremonyStore {
   setIsTied: (tied: boolean) => void
   setCeremonyPhase: (phase: 'loading' | 'global_titles' | 'winner' | 'summary') => void
   nextCeremonyReveal: () => void
+  reset: () => void
 }
 
 const useCeremonyStore = create<CeremonyStore>((set) => ({

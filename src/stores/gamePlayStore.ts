@@ -38,6 +38,7 @@ interface GamePlayStore {
     timestamp: string
   }) => void
   clearGameState: () => void
+  reset: () => void
   
   // Legacy actions (keeping for existing functionality)
   setGame: (game: Game | null) => void

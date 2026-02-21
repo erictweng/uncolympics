@@ -11,6 +11,7 @@ interface ScoreboardStore {
   setScoreboardData: (data: ScoreboardData | null) => void
   setSelectedPlayer: (detail: PlayerDetail | null) => void
   clearSelectedPlayer: () => void
+  reset: () => void
 }
 
 const useScoreboardStore = create<ScoreboardStore>((set) => ({

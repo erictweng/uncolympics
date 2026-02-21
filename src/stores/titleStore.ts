@@ -15,6 +15,7 @@ interface TitleStore {
   setGameTitles: (titles: (Title & { playerName: string })[]) => void
   nextReveal: () => void
   resetReveal: () => void
+  reset: () => void
   setIsLastGame: (isLast: boolean) => void
   
   // Legacy actions (keeping for existing functionality)
