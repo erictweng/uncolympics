@@ -227,7 +227,7 @@ export async function reconnectPlayer(
   // (inner join + .neq on joined table can silently return 0 rows in some Supabase/PostgREST versions)
   const { data, error } = await supabase
     .from('players')
-    .select(`*, tournament:tournaments!players_tournament_id_fkey(*)`)
+    .select(`*, tournament:tournaments!fk_players_tournament(*)`)
     .eq('device_id', deviceId)
     .order('created_at', { ascending: false })
     .limit(5)
