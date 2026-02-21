@@ -1,4 +1,4 @@
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import useLobbyStore from '../stores/lobbyStore'
@@ -70,6 +70,19 @@ function Scoreboard() {
     document.title = 'UNCOLYMPICS - Scoreboard';
   }, []);
   
+  const [exiting, setExiting] = useState(false)
+  const [shining, setShining] = useState(false)
+
+  const handleDebuncd = () => {
+    setShining(true)
+    // Brief shine, then slide everything off
+    setTimeout(() => {
+      setExiting(true)
+      // Navigate home after slide-out completes
+      setTimeout(() => navigate('/'), 500)
+    }, 400)
+  }
+
   if (!scoreboardData) {
     return <div className="min-h-screen" />;
   }
@@ -83,11 +96,13 @@ function Scoreboard() {
     percentage: maxScore > 0 ? (team.total_points / maxScore) * 100 : 0
   }))
 
-  // Get leading team for glow effect
-  const leadingTeam = teams[0]
-
   return (
-    <div className="min-h-screen px-6 pt-8 space-y-8">
+    <div className="min-h-screen px-6 pt-8 relative overflow-hidden">
+      <motion.div
+        className="space-y-8"
+        animate={exiting ? { x: '-120%', opacity: 0 } : { x: 0, opacity: 1 }}
+        transition={{ duration: 0.45, ease: 'easeIn' }}
+      >
       {/* Header */}
       <div className="mb-8">
         <h1 className="font-heading text-5xl text-white leading-tight">
@@ -239,7 +254,6 @@ function Scoreboard() {
         <h2 className="font-heading text-2xl text-white mb-6">Player Details</h2>
         <div className="flex flex-wrap gap-3">
           {players.filter(p => p.team_id).map((player) => {
-            const team = teams.find(t => t.id === player.team_id)
             return (
               <motion.button
                 key={player.id}
@@ -256,6 +270,26 @@ function Scoreboard() {
           })}
         </div>
       </section>
+
+      </motion.div>
+
+      {/* DebUNCD button — bottom right */}
+      {!exiting && (
+        <motion.button
+          onClick={handleDebuncd}
+          className="fixed bottom-6 right-6 font-heading text-lg z-40"
+          style={{
+            color: shining ? '#ffffff' : '#555555',
+            textShadow: shining ? '0 0 20px rgba(255,255,255,0.9), 0 0 40px rgba(255,255,255,0.5)' : 'none',
+          }}
+          animate={shining ? { scale: [1, 1.15, 1], opacity: [1, 1, 0.8] } : {}}
+          transition={{ duration: 0.3 }}
+          whileHover={{ color: '#888888' }}
+          whileTap={{ scale: 0.95 }}
+        >
+          DebUNCD?
+        </motion.button>
+      )}
 
       {/* Player Detail Modal */}
       <AnimatePresence>
