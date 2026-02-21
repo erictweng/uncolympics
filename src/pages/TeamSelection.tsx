@@ -1,6 +1,6 @@
 import { useEffect, useState, useMemo } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { motion } from 'framer-motion'
+import { motion, AnimatePresence } from 'framer-motion'
 import useLobbyStore from '../stores/lobbyStore'
 import { subscribeTournament } from '../lib/sync'
 import { fetchLobbyState, joinTeam, startTournament, assignRandomLeaders } from '../lib/api'
@@ -91,6 +91,18 @@ function TeamSelection() {
     [activePlayers, teams]
   )
 
+  // Track lock-in timestamps for ordering
+  const [lockInOrder, setLockInOrder] = useState<Record<string, number>>({})
+
+  // Get players sorted by lock-in order for each team
+  const getSortedTeamPlayers = (teamPlayers: typeof teamAPlayers) => {
+    return teamPlayers.sort((a, b) => {
+      const aTime = lockInOrder[a.id] || 0
+      const bTime = lockInOrder[b.id] || 0
+      return aTime - bTime // Earlier timestamps first
+    })
+  }
+
   const handlePanelTap = async (teamId: string) => {
     if (isLockedIn || phase !== 'choosing' || !currentPlayer) return
 
@@ -100,6 +112,11 @@ function TeamSelection() {
         await joinTeam(currentPlayer.id, teamId)
         setIsLockedIn(true)
         setPhase('locked')
+        // Track lock-in timestamp for ordering
+        setLockInOrder(prev => ({
+          ...prev,
+          [currentPlayer.id]: Date.now()
+        }))
         // Update local player state
         updatePlayer({ ...currentPlayer, team_id: teamId })
       } catch (err) {
@@ -207,18 +224,50 @@ function TeamSelection() {
       ))
     }
 
-    // Normal locked-in display
-    return teamPlayers.map(p => (
-      <motion.div
-        key={p.id}
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.3 }}
-        className="text-white text-lg font-body"
-      >
-        {p.name}
-      </motion.div>
-    ))
+    // Show players who have locked in, sorted by lock-in order
+    const sortedPlayers = getSortedTeamPlayers(teamPlayers)
+    const otherPlayers = sortedPlayers.filter(p => p.id !== currentPlayer?.id)
+    
+    return (
+      <>
+        {/* Current player's name (if locked in this team) */}
+        {currentPlayer?.team_id === teamId && isLockedIn && (
+          <motion.div
+            layoutId="current-player-name"
+            className="text-white text-lg font-body font-semibold"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.4, ease: 'easeOut' }}
+          >
+            {currentPlayer.name}
+          </motion.div>
+        )}
+        
+        {/* Other players fade in ONLY after current player locks in */}
+        <AnimatePresence>
+          {isLockedIn && otherPlayers.map((p, index) => (
+            <motion.div
+              key={p.id}
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ 
+                opacity: 1, 
+                y: 0,
+                // Push down if current player is also in this team
+                marginTop: (currentPlayer?.team_id === teamId && index === 0) ? 8 : 0
+              }}
+              transition={{ 
+                duration: 0.5, 
+                delay: 0.3 + (index * 0.1),
+                ease: 'easeOut'
+              }}
+              className="text-white text-lg font-body"
+            >
+              {p.name}
+            </motion.div>
+          ))}
+        </AnimatePresence>
+      </>
+    )
   }
 
   if (!tournament || !currentPlayer) {
@@ -264,17 +313,24 @@ function TeamSelection() {
         </h1>
       </motion.div>
 
-      {/* Player name above panels (only when not locked in) */}
-      {phase === 'choosing' && (
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.4, ease: 'easeOut' }}
-          className="text-center mb-6"
-        >
-          <span className="text-white text-2xl font-heading">
-            {currentPlayer.name}
-          </span>
+      {/* Player name above panels OR sliding into selected panel */}
+      {phase === 'choosing' && !isLockedIn && (
+        <motion.div className="text-center mb-6">
+          {!selectedTeamId ? (
+            // Name at top when no selection
+            <motion.div
+              layoutId="current-player-name"
+              className="text-white text-2xl font-heading"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.4, ease: 'easeOut' }}
+            >
+              {currentPlayer.name}
+            </motion.div>
+          ) : (
+            // Invisible placeholder when name has moved to panel
+            <div className="h-8" />
+          )}
         </motion.div>
       )}
 
@@ -298,10 +354,10 @@ function TeamSelection() {
                 background: 'rgba(255,255,255,0.05)',
                 backdropFilter: 'blur(12px)',
                 border: isSelected && !isLockedIn
-                  ? '1px solid rgba(255,255,255,0.4)'
+                  ? '2px solid rgba(255,255,255,0.6)'
                   : '1px solid rgba(255,255,255,0.1)',
                 boxShadow: isSelected && !isLockedIn
-                  ? '0 0 20px rgba(255,255,255,0.15)'
+                  ? '0 0 30px rgba(255,255,255,0.25), inset 0 0 20px rgba(255,255,255,0.1)'
                   : 'none',
               }}
               animate={{
@@ -313,6 +369,22 @@ function TeamSelection() {
               <div className="font-heading text-xl text-white mb-4">
                 {team.name.toUpperCase()}
               </div>
+
+              {/* Current player name sliding into selected panel */}
+              {isSelected && !isLockedIn && phase === 'choosing' && (
+                <motion.div
+                  layoutId="current-player-name"
+                  className="text-white text-xl font-heading mb-2"
+                  transition={{ 
+                    type: 'spring',
+                    stiffness: 300,
+                    damping: 30,
+                    duration: 0.5
+                  }}
+                >
+                  {currentPlayer.name}
+                </motion.div>
+              )}
 
               {/* Lock in prompt */}
               {isSelected && !isLockedIn && (
