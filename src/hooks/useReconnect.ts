@@ -41,12 +41,26 @@ export function useReconnect(shouldNavigate: boolean = true): ReconnectStatus {
     hasRun.current = true
 
     const reconnect = async () => {
-      // Step 1: If we already have state, just set up sync and we're good
+      // Step 1: If we already have state, set up sync and fetch full state if needed
       if (tournament?.id && currentPlayer?.id) {
         // Set up realtime if not already
         if (!unsubRef.current) {
           unsubRef.current = subscribeTournament(tournament.id)
         }
+
+        // Fetch full lobby state if players list is empty (first visit from create/join)
+        const { players } = useLobbyStore.getState()
+        if (players.length === 0) {
+          try {
+            const lobbyState = await fetchLobbyState(tournament.id)
+            setPlayers(lobbyState.players)
+            setTeams(lobbyState.teams)
+            setVotes(lobbyState.votes)
+          } catch (err) {
+            console.error('Failed to fetch lobby state on first visit:', err)
+          }
+        }
+
         // Still check if we need to redirect (status may have changed)
         if (shouldNavigate) {
           navigateToStatus(tournament, navigate)
