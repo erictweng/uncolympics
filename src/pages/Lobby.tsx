@@ -70,13 +70,10 @@ function Lobby() {
     return unsubscribe
   }, [tournament?.id])
 
-  // Navigate when tournament status changes
+  // Navigate when tournament status changes - handled by sync.ts
   useEffect(() => {
-    if (tournament?.status === 'team_select' && roomCode) {
-      navigate(`/team-select/${roomCode}`)
-    } else if (tournament?.status === 'picking' && roomCode) {
-      navigate(`/game/${roomCode}/pick`)
-    }
+    console.log('[LOBBY] Tournament status changed:', tournament?.status, 'roomCode:', roomCode);
+    // Navigation is now handled by sync.ts for consistency
   }, [tournament?.status, roomCode, navigate])
   
   useEffect(() => {
@@ -86,12 +83,15 @@ function Lobby() {
   // Leader assignment now happens in TeamSelection via random shuffle
 
   const handleStartTournament = async () => {
+    console.log('[LOBBY] handleStartTournament called, tournament:', tournament?.id, 'roomCode:', roomCode);
     if (!tournament || !roomCode) return
     // Update status so all players navigate to team selection
+    console.log('[LOBBY] Updating tournament status to team_select');
     await supabase
       .from('tournaments')
       .update({ status: 'team_select' })
       .eq('id', tournament.id)
+    console.log('[LOBBY] Referee navigating to team-select');
     navigate(`/team-select/${roomCode}`)
   }
 

@@ -1,6 +1,7 @@
 import { supabase } from './supabase';
 import { appNavigate } from './navigation';
 import useGameStore from '../stores/gameStore';
+import useLobbyStore from '../stores/lobbyStore';
 import type { Tournament, Player, Team, LeaderVote, Game, PlayerStat, GameResult, Title } from '../types';
 
 export function subscribeTournament(tournamentId: string) {
@@ -54,18 +55,23 @@ export function subscribeTournament(tournamentId: string) {
       if (payload.eventType === 'UPDATE') {
         // Handle status changes (lobby→picking) and other tournament updates
         const tournament = payload.new as Tournament;
+        console.log('[SYNC] Tournament UPDATE received:', tournament.status, tournament.room_code);
+        
         store.setTournament(tournament);
         
-        // Also update lobbyStore if it exists
-        try {
-          import('../stores/lobbyStore').then(m => m.default.getState().setTournament(tournament));
-        } catch (e) {}
+        // Also update lobbyStore directly
+        console.log('[SYNC] Updating lobbyStore with tournament:', tournament.status);
+        useLobbyStore.getState().setTournament(tournament);
 
         // Handle navigation based on tournament status changes
         if (tournament.status === 'team_select') {
           const currentUrl = window.location.pathname;
+          console.log('[SYNC] Tournament status is team_select, current URL:', currentUrl);
           if (!currentUrl.includes('/team-select')) {
+            console.log('[SYNC] Navigating to team-select:', `/team-select/${tournament.room_code}`);
             appNavigate(`/team-select/${tournament.room_code}`);
+          } else {
+            console.log('[SYNC] Already on team-select page, skipping navigation');
           }
         } else if (tournament.status === 'picking') {
           // Navigate to pick page

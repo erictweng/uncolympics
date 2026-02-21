@@ -49,7 +49,10 @@ const useLobbyStore = create<LobbyStore>((set) => ({
   connectionStatus: null,
   
   // Actions
-  setTournament: (tournament) => set({ tournament }),
+  setTournament: (tournament) => {
+    console.log('[LOBBYSTORE] setTournament called:', tournament?.status, tournament?.id);
+    set({ tournament });
+  },
   
   setCurrentPlayer: (player) => set({ currentPlayer: player }),
   
