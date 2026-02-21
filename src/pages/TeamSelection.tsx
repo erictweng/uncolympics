@@ -82,24 +82,28 @@ function TeamSelection() {
   const handlePanelTap = async (teamId: string) => {
     if (isLockedIn || phase !== 'choosing' || !currentPlayer) return
 
-    // Single tap — immediately lock in
-    try {
+    if (selectedTeamId === teamId) {
+      // Second tap on same panel — LOCK IN
+      try {
+        setIsLockedIn(true)
+        setPhase('locked')
+        setLockInOrder(prev => ({
+          ...prev,
+          [currentPlayer.id]: Date.now()
+        }))
+        updatePlayer({ ...currentPlayer, team_id: teamId })
+        await joinTeam(currentPlayer.id, teamId)
+      } catch (err) {
+        // Revert on failure
+        setSelectedTeamId(null)
+        setIsLockedIn(false)
+        setPhase('choosing')
+        updatePlayer({ ...currentPlayer, team_id: null })
+        toast.error('Failed to lock in')
+      }
+    } else {
+      // First tap (or switching) — highlight panel, show "Lock in?"
       setSelectedTeamId(teamId)
-      setIsLockedIn(true)
-      setPhase('locked')
-      setLockInOrder(prev => ({
-        ...prev,
-        [currentPlayer.id]: Date.now()
-      }))
-      updatePlayer({ ...currentPlayer, team_id: teamId })
-      await joinTeam(currentPlayer.id, teamId)
-    } catch (err) {
-      // Revert on failure
-      setSelectedTeamId(null)
-      setIsLockedIn(false)
-      setPhase('choosing')
-      updatePlayer({ ...currentPlayer, team_id: null })
-      toast.error('Failed to lock in')
     }
   }
 
@@ -329,20 +333,29 @@ function TeamSelection() {
           const isSelected = selectedTeamId === team.id
           const teamPlayers = idx === 0 ? teamAPlayers : teamBPlayers
 
+          const isHighlighted = isSelected && !isLockedIn // first tap, not yet locked
+
           return (
             <motion.div
               key={team.id}
               onClick={() => handlePanelTap(team.id)}
               className="flex-1 rounded-2xl p-4 flex flex-col items-center cursor-pointer relative overflow-hidden"
               style={{
-                background: 'rgba(255,255,255,0.05)',
+                background: isHighlighted
+                  ? 'rgba(255,255,255,0.1)'
+                  : 'rgba(255,255,255,0.05)',
                 backdropFilter: 'blur(12px)',
-                border: isSelected && isLockedIn
-                  ? '2px solid rgba(255,255,255,0.4)'
-                  : '1px solid rgba(255,255,255,0.1)',
+                border: isHighlighted
+                  ? '2px solid rgba(255,255,255,0.5)'
+                  : isSelected && isLockedIn
+                    ? '2px solid rgba(255,255,255,0.4)'
+                    : '1px solid rgba(255,255,255,0.1)',
+                boxShadow: isHighlighted
+                  ? '0 0 25px rgba(255,255,255,0.2), inset 0 0 15px rgba(255,255,255,0.05)'
+                  : 'none',
               }}
               animate={{
-                scale: 1,
+                scale: isHighlighted ? 1.02 : 1,
               }}
               transition={{ duration: 0.2 }}
             >
@@ -350,6 +363,21 @@ function TeamSelection() {
               <div className="font-heading text-xl text-white mb-4">
                 {team.name.toUpperCase()}
               </div>
+
+              {/* "Lock in?" prompt — shows on first tap */}
+              <AnimatePresence>
+                {isHighlighted && (
+                  <motion.div
+                    initial={{ opacity: 0, scale: 0.8 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    exit={{ opacity: 0, scale: 0.8 }}
+                    transition={{ duration: 0.2 }}
+                    className="text-gray-300 text-sm font-body mb-3"
+                  >
+                    Tap again to lock in
+                  </motion.div>
+                )}
+              </AnimatePresence>
 
               {/* Player names in this team */}
               <div className="flex flex-col items-center gap-2 flex-1">
