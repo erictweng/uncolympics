@@ -17,6 +17,7 @@ interface GamePlayStore {
   pickedGames: Game[]
   currentPickTeam: string | null
   currentRound: number
+  connectionStatus: 'connected' | 'reconnecting' | 'disconnected' | null
 
   // Actions
   // Sprint 3: Game Pick actions
@@ -40,6 +41,9 @@ interface GamePlayStore {
   clearGameState: () => void
   reset: () => void
   
+  // Connection status
+  setConnectionStatus: (status: 'connected' | 'reconnecting' | 'disconnected') => void
+  
   // Legacy actions (keeping for existing functionality)
   setGame: (game: Game | null) => void
 }
@@ -54,6 +58,7 @@ const useGamePlayStore = create<GamePlayStore>((set) => ({
   pickedGames: [],
   currentPickTeam: null,
   currentRound: 1,
+  connectionStatus: null,
   
   // Sprint 3: Game Pick actions
   setAvailableGames: (games) => set({ availableGames: games }),
@@ -100,6 +105,9 @@ const useGamePlayStore = create<GamePlayStore>((set) => ({
     liveFeed: []
   }),
   
+  // Connection status
+  setConnectionStatus: (status) => set({ connectionStatus: status }),
+  
   // Legacy actions (keeping for existing functionality)
   setGame: (game) => set({ currentGame: game }),
 
@@ -111,7 +119,8 @@ const useGamePlayStore = create<GamePlayStore>((set) => ({
     currentRound: 1,
     currentGameStats: [],
     currentGameResult: null,
-    liveFeed: []
+    liveFeed: [],
+    connectionStatus: null
   }),
 }))
 

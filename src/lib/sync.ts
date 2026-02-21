@@ -202,6 +202,7 @@ export function subscribeGame(gameId: string, tournamentId: string) {
         : null;
       if (connStatus) {
         useLobbyStore.getState().setConnectionStatus(connStatus);
+        useGamePlayStore.getState().setConnectionStatus(connStatus);
       }
     });
     
