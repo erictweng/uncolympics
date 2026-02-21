@@ -1,6 +1,58 @@
 import { supabase } from '../supabase'
 import type { Tournament, Player } from '../../types'
 
+/**
+ * Clean up stale tournaments in lobby status
+ * Deletes tournaments that are:
+ * - In 'lobby' status
+ * - Older than 30 minutes
+ * - Have 0-1 players (including referee)
+ */
+async function cleanupStaleTournaments(): Promise<void> {
+  try {
+    const thirtyMinutesAgo = new Date(Date.now() - 30 * 60 * 1000).toISOString()
+    
+    // Find stale lobby tournaments
+    const { data: staleTournaments, error: fetchError } = await supabase
+      .from('tournaments')
+      .select(`
+        id,
+        players(count)
+      `)
+      .eq('status', 'lobby')
+      .lt('created_at', thirtyMinutesAgo)
+    
+    if (fetchError) {
+      console.error('Error fetching stale tournaments:', fetchError)
+      return
+    }
+    
+    if (!staleTournaments || staleTournaments.length === 0) return
+    
+    // Filter tournaments with 0-1 players
+    const tournamentIdsToDelete = staleTournaments
+      .filter(tournament => {
+        const playerCount = (tournament.players as any)?.[0]?.count || 0
+        return playerCount <= 1
+      })
+      .map(tournament => tournament.id)
+    
+    if (tournamentIdsToDelete.length === 0) return
+    
+    // Delete stale tournaments (players will be cascade deleted)
+    const { error: deleteError } = await supabase
+      .from('tournaments')
+      .delete()
+      .in('id', tournamentIdsToDelete)
+    
+    if (deleteError) {
+      console.error('Error deleting stale tournaments:', deleteError)
+    }
+  } catch (error) {
+    console.error('Unexpected error in cleanupStaleTournaments:', error)
+  }
+}
+
 export async function createTournament(
   name: string,
   roomCode: string,
@@ -8,8 +60,40 @@ export async function createTournament(
   refereeName: string,
   deviceId: string
 ): Promise<{ tournament: Tournament; player: Player }> {
+  // Clean up stale tournaments (fire-and-forget)
+  cleanupStaleTournaments().catch(error => 
+    console.error('Background cleanup failed:', error)
+  )
+
   if (!roomCode || roomCode.length > 5 || !/^[A-Z0-9]+$/.test(roomCode)) {
     throw new Error('Room code must be 1-5 characters, alphanumeric, and uppercase')
+  }
+
+  // Delete any existing lobby tournament from the same device_id (handles referee refresh)
+  const { data: existingReferee } = await supabase
+    .from('players')
+    .select('tournament_id')
+    .eq('device_id', deviceId)
+    .eq('role', 'referee')
+    .limit(1)
+
+  if (existingReferee && existingReferee.length > 0) {
+    const tournamentId = existingReferee[0].tournament_id
+    
+    // Check if this tournament is still in lobby status
+    const { data: existingTournament } = await supabase
+      .from('tournaments')
+      .select('id, status')
+      .eq('id', tournamentId)
+      .eq('status', 'lobby')
+      .single()
+    
+    if (existingTournament) {
+      await supabase
+        .from('tournaments')
+        .delete()
+        .eq('id', tournamentId)
+    }
   }
 
   const { data: existing } = await supabase
@@ -88,6 +172,11 @@ export async function joinTournament(
   deviceId: string,
   role: 'player' | 'spectator'
 ): Promise<{ tournament: Tournament; player: Player }> {
+  // Clean up stale tournaments (fire-and-forget)
+  cleanupStaleTournaments().catch(error => 
+    console.error('Background cleanup failed:', error)
+  )
+
   const validation = await validateRoomCode(roomCode)
   if (!validation.valid || !validation.tournament) {
     throw new Error(validation.error || 'Room not found')
