@@ -8,11 +8,12 @@ import type { Tournament, Player, Team, GameResult, GameType, GameWithType, Titl
  */
 export async function fetchFullTournamentData(tournamentId: string) {
   // 1. Tournament
-  const { data: tournament, error: tErr } = await supabase
+  const { data: tournaments, error: tErr } = await supabase
     .from('tournaments')
     .select('*')
     .eq('id', tournamentId)
-    .single()
+    .limit(1)
+  const tournament = tournaments?.[0]
   if (tErr || !tournament) throw new Error(`Failed to fetch tournament: ${tErr?.message}`)
 
   // 2. Teams ordered by points

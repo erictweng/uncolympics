@@ -71,13 +71,14 @@ export async function createTournament(
     const tournamentId = existingReferee[0].tournament_id
     
     // Check if this tournament is still in lobby status
-    const { data: existingTournament } = await supabase
+    const { data: existingTournaments } = await supabase
       .from('tournaments')
       .select('id, status')
       .eq('id', tournamentId)
       .eq('status', 'lobby')
-      .single()
+      .limit(1)
     
+    const existingTournament = existingTournaments?.[0]
     if (existingTournament) {
       await supabase
         .from('tournaments')
@@ -86,14 +87,30 @@ export async function createTournament(
     }
   }
 
-  const { data: existing } = await supabase
+  // Clean up any stale tournaments with this room code before checking
+  const { data: existingTournaments } = await supabase
     .from('tournaments')
-    .select('id')
+    .select('id, status, created_at')
     .eq('room_code', roomCode)
     .neq('status', 'completed')
-    .single()
 
-  if (existing) throw new Error('Room code already exists')
+  if (existingTournaments && existingTournaments.length > 0) {
+    // Delete stale lobby tournaments with this room code (older than 5 min)
+    const fiveMinAgo = new Date(Date.now() - 5 * 60 * 1000).toISOString()
+    const staleIds = existingTournaments
+      .filter(t => t.status === 'lobby' && t.created_at < fiveMinAgo)
+      .map(t => t.id)
+    
+    if (staleIds.length > 0) {
+      await supabase.from('tournaments').delete().in('id', staleIds)
+    }
+
+    // Re-check: any active (non-stale) tournaments still using this code?
+    const remaining = existingTournaments.filter(t => !staleIds.includes(t.id))
+    if (remaining.length > 0) {
+      throw new Error('Room code already exists')
+    }
+  }
 
   const { data: tournament, error: tournamentError } = await supabase
     .from('tournaments')
@@ -145,13 +162,15 @@ export async function validateRoomCode(
     return { valid: false, error: 'Invalid room code format' }
   }
 
-  const { data: tournament, error } = await supabase
+  const { data: tournaments, error } = await supabase
     .from('tournaments')
     .select('*')
     .eq('room_code', roomCode)
     .neq('status', 'completed')
-    .single()
+    .order('created_at', { ascending: false })
+    .limit(1)
 
+  const tournament = tournaments?.[0]
   if (error || !tournament) return { valid: false, error: 'Room not found' }
   return { valid: true, tournament }
 }
@@ -292,13 +311,14 @@ export async function assignRandomLeaders(tournamentId: string): Promise<void> {
 export async function leaveTournament(playerId: string): Promise<void> {
   try {
     // First, get the player to check if they are a leader
-    const { data: player, error: fetchError } = await supabase
+    const { data: players, error: fetchError } = await supabase
       .from('players')
       .select('id, team_id, is_leader')
       .eq('id', playerId)
-      .single()
+      .limit(1)
 
     if (fetchError) throw new Error(`Failed to fetch player: ${fetchError.message}`)
+    const player = players?.[0]
     if (!player) throw new Error('Player not found')
 
     // If the player is a leader, we need to remove their leader status first

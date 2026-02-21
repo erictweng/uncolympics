@@ -4,8 +4,9 @@ import type { Tournament, Player, Team, LeaderVote } from '../../types'
 export async function fetchLobbyState(
   tournamentId: string
 ): Promise<{ tournament: Tournament; players: Player[]; teams: Team[]; votes: LeaderVote[] }> {
-  const { data: tournament, error: tournamentError } = await supabase
-    .from('tournaments').select('*').eq('id', tournamentId).single()
+  const { data: tournaments, error: tournamentError } = await supabase
+    .from('tournaments').select('*').eq('id', tournamentId).limit(1)
+  const tournament = tournaments?.[0]
   if (tournamentError || !tournament) throw new Error(`Failed to fetch tournament: ${tournamentError?.message}`)
 
   const { data: players, error: playersError } = await supabase
@@ -43,13 +44,15 @@ export async function updateTeamName(teamId: string, name: string): Promise<Team
 }
 
 export async function joinTeam(playerId: string, teamId: string): Promise<Player> {
-  const { data: currentPlayer } = await supabase
-    .from('players').select('team_id').eq('id', playerId).single()
+  const { data: currentPlayers } = await supabase
+    .from('players').select('team_id').eq('id', playerId).limit(1)
+  const currentPlayer = currentPlayers?.[0]
 
-  const { data: player, error } = await supabase
+  const { data: updatedPlayers, error } = await supabase
     .from('players')
     .update({ team_id: teamId, is_leader: false })
-    .eq('id', playerId).select().single()
+    .eq('id', playerId).select().limit(1)
+  const player = updatedPlayers?.[0]
   if (error || !player) throw new Error(`Failed to join team: ${error?.message}`)
 
   if (currentPlayer?.team_id && currentPlayer.team_id !== teamId) {
@@ -60,12 +63,14 @@ export async function joinTeam(playerId: string, teamId: string): Promise<Player
 }
 
 export async function leaveTeam(playerId: string): Promise<Player> {
-  const { data: currentPlayer } = await supabase
-    .from('players').select('team_id').eq('id', playerId).single()
+  const { data: currentPlayers } = await supabase
+    .from('players').select('team_id').eq('id', playerId).limit(1)
+  const currentPlayer = currentPlayers?.[0]
 
-  const { data: player, error } = await supabase
+  const { data: updatedPlayers, error } = await supabase
     .from('players').update({ team_id: null, is_leader: false })
-    .eq('id', playerId).select().single()
+    .eq('id', playerId).select().limit(1)
+  const player = updatedPlayers?.[0]
   if (error || !player) throw new Error(`Failed to leave team: ${error?.message}`)
 
   if (currentPlayer?.team_id) {
