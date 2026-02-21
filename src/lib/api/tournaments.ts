@@ -166,3 +166,56 @@ export async function startTournament(tournamentId: string): Promise<Tournament>
   if (error || !tournament) throw new Error(`Failed to start tournament: ${error?.message}`)
   return tournament
 }
+
+export async function cancelTournament(tournamentId: string): Promise<void> {
+  try {
+    const { error } = await supabase
+      .from('tournaments')
+      .delete()
+      .eq('id', tournamentId)
+
+    if (error) throw new Error(`Failed to cancel tournament: ${error.message}`)
+  } catch (error) {
+    if (error instanceof Error) {
+      throw error
+    }
+    throw new Error(`Unexpected error canceling tournament: ${error}`)
+  }
+}
+
+export async function leaveTournament(playerId: string): Promise<void> {
+  try {
+    // First, get the player to check if they are a leader
+    const { data: player, error: fetchError } = await supabase
+      .from('players')
+      .select('id, team_id, is_leader')
+      .eq('id', playerId)
+      .single()
+
+    if (fetchError) throw new Error(`Failed to fetch player: ${fetchError.message}`)
+    if (!player) throw new Error('Player not found')
+
+    // If the player is a leader, we need to remove their leader status first
+    if (player.is_leader && player.team_id) {
+      const { error: leaderError } = await supabase
+        .from('players')
+        .update({ is_leader: false })
+        .eq('id', playerId)
+
+      if (leaderError) throw new Error(`Failed to remove leader status: ${leaderError.message}`)
+    }
+
+    // Now delete the player (CASCADE will handle related data)
+    const { error: deleteError } = await supabase
+      .from('players')
+      .delete()
+      .eq('id', playerId)
+
+    if (deleteError) throw new Error(`Failed to remove player: ${deleteError.message}`)
+  } catch (error) {
+    if (error instanceof Error) {
+      throw error
+    }
+    throw new Error(`Unexpected error leaving tournament: ${error}`)
+  }
+}
