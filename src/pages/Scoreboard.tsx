@@ -4,11 +4,15 @@ import { motion, AnimatePresence } from 'framer-motion'
 import useLobbyStore from '../stores/lobbyStore'
 import useScoreboardStore from '../stores/scoreboardStore'
 import { fetchScoreboard, fetchPlayerDetail, validateRoomCode } from '../lib/api'
+import { useReconnect } from '../hooks/useReconnect'
 
 function Scoreboard() {
   const { roomCode } = useParams<{ roomCode: string }>()
   const navigate = useNavigate()
   
+  // Reconnect on refresh
+  useReconnect(true)
+
   const { tournament, setTournament } = useLobbyStore()
   const {
     scoreboardData,

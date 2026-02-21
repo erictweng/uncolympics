@@ -3,9 +3,7 @@ import { supabase } from '../lib/supabase'
 import { useParams, useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import useLobbyStore from '../stores/lobbyStore'
-import { subscribeTournament } from '../lib/sync'
 import { 
-  fetchLobbyState, 
   createTeam, 
   cancelTournament,
   leaveTournament
@@ -20,72 +18,39 @@ import { useReconnect } from '../hooks/useReconnect'
 function Lobby() {
   const { roomCode } = useParams<{ roomCode: string }>()
   const navigate = useNavigate()
-  const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [showConfirmModal, setShowConfirmModal] = useState(false)
-  const [isReconnecting, setIsReconnecting] = useState(true)
 
-  // Use reconnect hook without navigation to repopulate state on refresh
-  useReconnect(false)
+  // Single reconnect hook handles: fetch state, set up realtime, redirect if needed
+  // shouldNavigate=true so if tournament moved past lobby, we redirect
+  const reconnectStatus = useReconnect(true)
 
   const {
     tournament,
     currentPlayer,
     players,
     connectionStatus,
-    setTournament,
-    setPlayers,
-    setTeams,
-    setVotes
+    setTeams
   } = useLobbyStore()
 
-  // Load lobby state on mount or when tournament becomes available
+  // Create default teams if they don't exist (after reconnect finishes)
   useEffect(() => {
-    if (!tournament?.id) {
-      // If no tournament yet, we're still reconnecting
-      setIsReconnecting(true)
-      setIsLoading(true)
-      return
-    }
-
-    const loadLobbyState = async () => {
-      try {
-        setIsLoading(true)
-        setIsReconnecting(false)
-        const state = await fetchLobbyState(tournament.id)
-        setTournament(state.tournament)
-        setPlayers(state.players)
-        setTeams(state.teams)
-        setVotes(state.votes)
-        
-        // Create teams if they don't exist (but don't auto-assign players)
-        if (state.teams.length === 0) {
+    if (reconnectStatus !== 'ready' || !tournament?.id) return
+    
+    const ensureTeams = async () => {
+      const { teams } = useLobbyStore.getState()
+      if (teams.length === 0) {
+        try {
           const teamA = await createTeam(tournament.id, 'Team A')
           const teamB = await createTeam(tournament.id, 'Team B')
           setTeams([teamA, teamB])
+        } catch (err) {
+          console.error('Failed to create default teams:', err)
         }
-      } catch (err) {
-        setError(err instanceof Error ? err.message : 'Failed to load lobby')
-      } finally {
-        setIsLoading(false)
-        setIsReconnecting(false)
       }
     }
-
-    loadLobbyState()
-  }, [tournament?.id, currentPlayer?.id])
-
-  // Setup real-time sync
-  useEffect(() => {
-    if (!tournament?.id) return
-    const unsubscribe = subscribeTournament(tournament.id)
-    return unsubscribe
-  }, [tournament?.id])
-
-  // Navigation when tournament status changes is handled by sync.ts
-  useEffect(() => {
-    // Tournament status changes trigger navigation via sync.ts for all status types
-  }, [tournament?.status, roomCode, navigate])
+    ensureTeams()
+  }, [reconnectStatus, tournament?.id])
   
   useEffect(() => {
     document.title = `UNCOLYMPICS - Lobby ${roomCode || ''}`;
@@ -156,21 +121,30 @@ function Lobby() {
     enabled: true // Always enabled for exit functionality
   })
 
-  // Show loading while reconnecting or loading lobby state
-  if (isLoading || isReconnecting || !tournament) {
+  // Loading / error states based on reconnect status
+  if (reconnectStatus === 'loading') {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <div className="text-lg text-gray-400">
-          {isReconnecting ? 'Reconnecting...' : 'Loading lobby...'}
-        </div>
+        <div className="text-lg text-gray-400">Loading lobby...</div>
       </div>
-    );
+    )
   }
 
-  if (!currentPlayer) {
+  if (reconnectStatus === 'expired' || reconnectStatus === 'error') {
+    return (
+      <div className="min-h-screen flex items-center justify-center flex-col gap-4">
+        <div className="text-xl text-gray-400">Session expired</div>
+        <button onClick={() => navigate('/')} className="text-blue-400 underline">
+          Back to home
+        </button>
+      </div>
+    )
+  }
+
+  if (!tournament || !currentPlayer) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <div className="text-xl text-red-300">Failed to load player data</div>
+        <div className="text-lg text-gray-400">Loading...</div>
       </div>
     )
   }

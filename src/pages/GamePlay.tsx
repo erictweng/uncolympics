@@ -4,6 +4,7 @@ import useLobbyStore from '../stores/lobbyStore';
 import useGamePlayStore from '../stores/gamePlayStore';
 import { fetchGameState, submitPlayerStats, submitGameResult, endGame } from '../lib/api';
 import { subscribeGame } from '../lib/sync';
+import { useReconnect } from '../hooks/useReconnect';
 import DynamicStatInput from '../components/game/DynamicStatInput';
 import DynamicRefereeInput from '../components/game/DynamicRefereeInput';
 import type { GameType } from '../types';
@@ -26,6 +27,9 @@ function GamePlay() {
   const { gameId } = useParams<{ roomCode: string; gameId: string }>();
   const navigate = useNavigate();
   
+  // Reconnect on refresh
+  useReconnect(true);
+
   const { tournament, currentPlayer, players, teams } = useLobbyStore();
   const {
     currentGame,

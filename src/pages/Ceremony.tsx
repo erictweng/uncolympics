@@ -7,10 +7,14 @@ import useGameStore from '../stores/gameStore'
 import { fetchCeremonyData, saveGlobalTitles, updateTeamPoints, validateRoomCode } from '../lib/api'
 import { calculateGlobalTitles } from '../lib/globalTitles'
 import Confetti from '../components/animation/Confetti'
+import { useReconnect } from '../hooks/useReconnect'
 
 function Ceremony() {
   const { roomCode } = useParams<{ roomCode: string }>()
   const navigate = useNavigate()
+
+  // Reconnect on refresh
+  useReconnect(true)
 
   const { currentPlayer, tournament, setTournament } = useLobbyStore()
   const { 

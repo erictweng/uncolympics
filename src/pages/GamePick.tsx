@@ -3,8 +3,8 @@ import { useParams, useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import useLobbyStore from '../stores/lobbyStore'
 import useGamePlayStore from '../stores/gamePlayStore'
-import { subscribeTournament } from '../lib/sync'
 import { fetchAvailableGames, fetchPickState, pickGame } from '../lib/api'
+import { useReconnect } from '../hooks/useReconnect'
 import CustomGameCreator from '../components/game/CustomGameCreator'
 import DiceRoll from '../components/game/DiceRoll'
 import type { GameType, Game } from '../types'
@@ -71,6 +71,9 @@ function GamePick() {
   const [showCustomGameCreator, setShowCustomGameCreator] = useState(false)
   const [diceRollDone, setDiceRollDone] = useState(false)
   
+  // Reconnect on refresh — handles state recovery + realtime + redirect
+  const reconnectStatus = useReconnect(true)
+
   const { tournament, currentPlayer, teams, connectionStatus } = useLobbyStore()
   const {
     availableGames,
@@ -114,13 +117,7 @@ function GamePick() {
     loadPickState()
   }, [tournament?.id, setAvailableGames, setPickedGames, setCurrentPickTeam, setCurrentRound])
 
-  // Subscribe to real-time updates
-  useEffect(() => {
-    if (!tournament?.id) return
-
-    const unsubscribe = subscribeTournament(tournament.id)
-    return unsubscribe
-  }, [tournament?.id])
+  // Real-time subscription is handled by useReconnect
 
   // Navigation effect - when game status changes to playing, navigate to game
   useEffect(() => {
@@ -167,7 +164,16 @@ function GamePick() {
     document.title = 'UNCOLYMPICS - Game Pick';
   }, []);
   
-  if (loading) {
+    if (reconnectStatus === 'expired' || reconnectStatus === 'error') {
+    return (
+      <div className="min-h-screen flex items-center justify-center flex-col gap-4">
+        <div className="text-xl text-gray-400">Session expired</div>
+        <button onClick={() => navigate('/')} className="text-blue-400 underline">Back to home</button>
+      </div>
+    )
+  }
+
+  if (loading || reconnectStatus === 'loading') {
     return <div className="min-h-screen" />;
   }
 

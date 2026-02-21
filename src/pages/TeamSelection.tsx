@@ -2,80 +2,45 @@ import { useEffect, useState, useMemo } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import useLobbyStore from '../stores/lobbyStore'
-import { subscribeTournament } from '../lib/sync'
-import { fetchLobbyState, joinTeam, startTournament, assignRandomLeaders } from '../lib/api'
+import { joinTeam, startTournament, assignRandomLeaders, fetchLobbyState } from '../lib/api'
 import { toast } from '../lib/toast'
 import { useReconnect } from '../hooks/useReconnect'
 
 type Phase = 'choosing' | 'locked' | 'shuffling' | 'revealed'
 
 function TeamSelection() {
-  const { roomCode } = useParams<{ roomCode: string }>()
+  useParams<{ roomCode: string }>()
   const navigate = useNavigate()
   const [phase, setPhase] = useState<Phase>('choosing')
   const [selectedTeamId, setSelectedTeamId] = useState<string | null>(null)
   const [isLockedIn, setIsLockedIn] = useState(false)
   const [shuffleNames, setShuffleNames] = useState<Record<string, string[]>>({})
   const [revealedLeaders, setRevealedLeaders] = useState<Record<string, string>>({}) // teamId -> playerId
-  const [isReconnecting, setIsReconnecting] = useState(true)
 
-  // Use reconnect hook to repopulate state on refresh
-  useReconnect(false)
+  // Single reconnect hook — handles fetch, realtime, and redirect
+  const reconnectStatus = useReconnect(true)
 
   const {
     tournament,
     currentPlayer,
     players,
     teams,
-    setTournament,
     setPlayers,
-    setTeams,
-    setVotes,
     updatePlayer,
     connectionStatus,
   } = useLobbyStore()
 
-  // Load state on mount or when tournament becomes available (after reconnect)
+  // After reconnect, check if current player already picked a team
   useEffect(() => {
-    if (!tournament?.id) {
-      setIsReconnecting(true)
-      return
+    if (reconnectStatus !== 'ready' || !currentPlayer?.id) return
+    const { players: storePlayers } = useLobbyStore.getState()
+    const me = storePlayers.find(p => p.id === currentPlayer.id)
+    if (me?.team_id) {
+      setSelectedTeamId(me.team_id)
+      setIsLockedIn(true)
+      setPhase('locked')
     }
-    const load = async () => {
-      try {
-        setIsReconnecting(false)
-        const state = await fetchLobbyState(tournament.id)
-        setTournament(state.tournament)
-        setPlayers(state.players)
-        setTeams(state.teams)
-        setVotes(state.votes)
-
-        // Check if current player already has a team (reconnect case)
-        const me = state.players.find(p => p.id === currentPlayer?.id)
-        if (me?.team_id) {
-          setSelectedTeamId(me.team_id)
-          setIsLockedIn(true)
-          setPhase('locked')
-        }
-      } catch (err) {
-        toast.error('Failed to load team selection')
-      }
-    }
-    load()
-  }, [tournament?.id])
-
-  // Real-time sync
-  useEffect(() => {
-    if (!tournament?.id) return
-    return subscribeTournament(tournament.id)
-  }, [tournament?.id])
-
-  // Navigate when tournament goes to 'picking'
-  useEffect(() => {
-    if (tournament?.status === 'picking' && roomCode) {
-      navigate(`/game/${roomCode}/pick`)
-    }
-  }, [tournament?.status, roomCode])
+  }, [reconnectStatus, currentPlayer?.id])
 
   useEffect(() => {
     document.title = `UNCOLYMPICS - Choose Your UNC`
@@ -155,7 +120,7 @@ function TeamSelection() {
         // Build revealed leaders map
         const leaders: Record<string, string> = {}
         for (const team of state.teams) {
-          const leader = state.players.find(p => p.team_id === team.id && p.is_leader)
+          const leader = state.players.find((p: any) => p.team_id === team.id && p.is_leader)
           if (leader) leaders[team.id] = leader.id
         }
         setRevealedLeaders(leaders)
@@ -279,12 +244,27 @@ function TeamSelection() {
     )
   }
 
+    if (reconnectStatus === 'loading') {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-lg text-gray-400">Loading...</div>
+      </div>
+    )
+  }
+
+  if (reconnectStatus === 'expired' || reconnectStatus === 'error') {
+    return (
+      <div className="min-h-screen flex items-center justify-center flex-col gap-4">
+        <div className="text-xl text-gray-400">Session expired</div>
+        <button onClick={() => navigate('/')} className="text-blue-400 underline">Back to home</button>
+      </div>
+    )
+  }
+
   if (!tournament || !currentPlayer) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <div className="text-lg text-gray-400">
-          {isReconnecting ? 'Reconnecting...' : 'Failed to load team selection'}
-        </div>
+        <div className="text-lg text-gray-400">Loading...</div>
       </div>
     )
   }

@@ -6,10 +6,14 @@ import useTitleStore from '../stores/titleStore'
 import { fetchTitlesForGame, saveTitles, updateTeamPoints, advanceToNextRound } from '../lib/api'
 import { calculateTitles } from '../lib/titles'
 import { subscribeGame, subscribeTournament } from '../lib/sync'
+import { useReconnect } from '../hooks/useReconnect'
 
 function TitleReveal() {
   const { roomCode, gameId } = useParams<{ roomCode: string; gameId: string }>()
   
+  // Reconnect on refresh
+  useReconnect(true)
+
   const { tournament, currentPlayer, teams } = useLobbyStore()
   const {
     gameTitles,
