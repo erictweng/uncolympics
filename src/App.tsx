@@ -14,6 +14,7 @@ import GamePick from './pages/GamePick'
 import GamePlay from './pages/GamePlay'
 import TitleReveal from './pages/TitleReveal'
 import Scoreboard from './pages/Scoreboard'
+import TeamSelection from './pages/TeamSelection'
 import Ceremony from './pages/Ceremony'
 import History from './pages/History'
 
@@ -45,6 +46,7 @@ function App() {
             <Route path="/create" element={<PageTransition><CreateTournament /></PageTransition>} />
             <Route path="/join" element={<PageTransition><JoinTournament /></PageTransition>} />
             <Route path="/lobby/:roomCode" element={<PageTransition><Lobby /></PageTransition>} />
+            <Route path="/team-select/:roomCode" element={<PageTransition><TeamSelection /></PageTransition>} />
             <Route path="/game/:roomCode/pick" element={<PageTransition><GamePick /></PageTransition>} />
             <Route path="/game/:roomCode/play/:gameId" element={<PageTransition><GamePlay /></PageTransition>} />
             <Route path="/game/:roomCode/reveal/:gameId" element={<PageTransition><TitleReveal /></PageTransition>} />

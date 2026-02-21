@@ -8,7 +8,6 @@ import {
   createTeam, 
   joinTeam, 
   voteForLeader, 
-  startTournament,
   cancelTournament,
   leaveTournament
 } from '../lib/api'
