@@ -107,12 +107,8 @@ function Lobby() {
   }, [currentPlayer, teams, players, votes.length])
 
   const handleStartTournament = async () => {
-    if (!tournament) return
-    try {
-      await startTournament(tournament.id)
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'Failed to start tournament')
-    }
+    if (!tournament || !roomCode) return
+    navigate(`/team-select/${roomCode}`)
   }
 
   const handleSwipeDown = () => {

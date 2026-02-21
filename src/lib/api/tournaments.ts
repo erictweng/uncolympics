@@ -272,6 +272,33 @@ export async function cancelTournament(tournamentId: string): Promise<void> {
   }
 }
 
+export async function assignRandomLeaders(tournamentId: string): Promise<void> {
+  // Get all teams with their players
+  const { data: teams, error: teamsError } = await supabase
+    .from('teams')
+    .select(`id, players(id)`)
+    .eq('tournament_id', tournamentId)
+
+  if (teamsError) throw new Error(`Failed to fetch teams: ${teamsError.message}`)
+
+  // Reset all leaders first
+  await supabase
+    .from('players')
+    .update({ is_leader: false })
+    .eq('tournament_id', tournamentId)
+
+  // For each team, randomly pick one player as leader
+  for (const team of (teams || [])) {
+    const players = (team.players as any[]) || []
+    if (players.length === 0) continue
+    const randomPlayer = players[Math.floor(Math.random() * players.length)]
+    await supabase
+      .from('players')
+      .update({ is_leader: true })
+      .eq('id', randomPlayer.id)
+  }
+}
+
 export async function leaveTournament(playerId: string): Promise<void> {
   try {
     // First, get the player to check if they are a leader
