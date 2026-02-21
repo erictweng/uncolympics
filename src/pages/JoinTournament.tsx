@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { joinTournament } from '../lib/api'
@@ -11,26 +11,22 @@ import { SwipeHint } from '../components/ui/SwipeHint'
 function JoinTournament() {
   const navigate = useNavigate()
   const { setTournament, setCurrentPlayer } = useLobbyStore()
-  const nameRef = useRef<HTMLDivElement>(null)
-  const lobbyRef = useRef<HTMLDivElement>(null)
   
   useEffect(() => {
     document.title = 'UNCOLYMPICS - Join Tournament';
   }, []);
   
-  const [formData, setFormData] = useState({
-    playerName: '',
-    roomCode: ''
-  })
+  const [playerName, setPlayerName] = useState('')
+  const [roomCode, setRoomCode] = useState('')
   const [loading, setLoading] = useState(false)
-  const [nameEditing, setNameEditing] = useState(false)
-  const [lobbyEditing, setLobbyEditing] = useState(false)
+
+  const isFormValid = playerName.trim() !== '' && roomCode.trim() !== ''
 
   const validateForm = (): string | null => {
-    if (!formData.roomCode.trim()) return 'Lobby code is required'
-    if (!formData.playerName.trim()) return 'Name is required'
-    if (formData.roomCode.length > 5) return 'Lobby code must be 5 characters or less'
-    if (!/^[A-Z0-9]+$/.test(formData.roomCode)) return 'Lobby code must be alphanumeric'
+    if (!roomCode.trim()) return 'Lobby code is required'
+    if (!playerName.trim()) return 'Name is required'
+    if (roomCode.length > 5) return 'Lobby code must be 5 characters or less'
+    if (!/^[A-Z0-9]+$/i.test(roomCode)) return 'Lobby code must be alphanumeric'
     return null
   }
 
@@ -46,8 +42,8 @@ function JoinTournament() {
     try {
       const deviceId = getOrCreateDeviceId()
       const result = await joinTournament(
-        formData.roomCode.trim().toUpperCase(),
-        formData.playerName.trim(),
+        roomCode.trim().toUpperCase(),
+        playerName.trim(),
         deviceId,
         'player'
       )
@@ -71,46 +67,18 @@ function JoinTournament() {
     }
   }
 
-  const handleNameClick = () => {
-    setNameEditing(true)
-    setTimeout(() => nameRef.current?.focus(), 0)
-  }
-
-  const handleLobbyClick = () => {
-    setLobbyEditing(true)
-    setTimeout(() => lobbyRef.current?.focus(), 0)
-  }
-
-  const handleNameBlur = () => {
-    setNameEditing(false)
-  }
-
-  const handleLobbyBlur = () => {
-    setLobbyEditing(false)
-  }
-
-  const handleNameInput = (e: React.FormEvent<HTMLDivElement>) => {
-    const target = e.target as HTMLDivElement
-    setFormData(prev => ({ ...prev, playerName: target.textContent || '' }))
-  }
-
-  const handleLobbyInput = (e: React.FormEvent<HTMLDivElement>) => {
-    const target = e.target as HTMLDivElement
-    setFormData(prev => ({ ...prev, roomCode: (target.textContent || '').toUpperCase() }))
-  }
-
   const handleBackNavigation = () => {
     navigate('/')
   }
 
-  // Add swipe-up functionality
+  // Swipe-up to join — only enabled when form is valid
   const { swipeHintRef } = useSwipeUp({
     onSwipe: handleJoin,
-    enabled: !loading && formData.playerName.trim() !== '' && formData.roomCode.trim() !== ''
+    enabled: !loading && isFormValid
   })
 
   return (
-    <div ref={swipeHintRef} className="flex flex-col items-center justify-center min-h-screen relative">
+    <div ref={swipeHintRef} className="flex flex-col items-center justify-center min-h-screen relative px-6">
       {/* Back navigation */}
       <button
         onClick={handleBackNavigation}
@@ -119,54 +87,46 @@ function JoinTournament() {
         ←
       </button>
 
-      {/* Animated elements */}
+      {/* Name */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.6, delay: 0.2 }}
-        className="mb-12"
+        className="mb-12 w-full max-w-md"
       >
-        <div
-          ref={nameRef}
-          contentEditable={nameEditing}
-          suppressContentEditableWarning={true}
-          onClick={handleNameClick}
-          onBlur={handleNameBlur}
-          onInput={handleNameInput}
-          className="seamless-editable text-6xl md:text-7xl font-heading text-primary text-center cursor-pointer"
-          data-placeholder="Name"
-        >
-          {!nameEditing && formData.playerName ? formData.playerName : ''}
-        </div>
+        <input
+          type="text"
+          value={playerName}
+          onChange={(e) => setPlayerName(e.target.value)}
+          placeholder="Name"
+          className="seamless-input text-6xl md:text-7xl font-heading text-primary text-center w-full"
+          autoComplete="off"
+        />
       </motion.div>
 
+      {/* Lobby Code */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.6, delay: 0.4 }}
-        className="mb-12"
+        className="mb-12 w-full max-w-md"
       >
-        <div
-          ref={lobbyRef}
-          contentEditable={lobbyEditing}
-          suppressContentEditableWarning={true}
-          onClick={handleLobbyClick}
-          onBlur={handleLobbyBlur}
-          onInput={handleLobbyInput}
-          className="seamless-editable text-6xl md:text-7xl font-heading text-primary text-center cursor-pointer tracking-wider"
-          data-placeholder="Lobby #"
-          style={{ textTransform: 'uppercase' }}
-        >
-          {!lobbyEditing && formData.roomCode ? formData.roomCode : ''}
-        </div>
+        <input
+          type="text"
+          value={roomCode}
+          onChange={(e) => setRoomCode(e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 5))}
+          placeholder="Lobby #"
+          maxLength={5}
+          className="seamless-input text-6xl md:text-7xl font-heading text-primary text-center w-full tracking-wider uppercase"
+          autoComplete="off"
+        />
       </motion.div>
 
       {/* Swipe hint */}
       <SwipeHint 
-        visible={!loading && formData.playerName.trim() !== '' && formData.roomCode.trim() !== ''} 
-        text="↑ Swipe up"
+        visible={!loading} 
+        text={isFormValid ? "↑ Swipe up to join" : "Fill name & lobby code"}
       />
-
     </div>
   )
 }

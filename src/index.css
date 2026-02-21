@@ -124,6 +124,30 @@ body {
   opacity: 0.7;
 }
 
+/* Seamless input — native <input> styled to look like inline text */
+.seamless-input {
+  background: transparent;
+  border: none;
+  outline: none;
+  color: var(--text-primary);
+  font-family: 'Bebas Neue', cursive;
+  caret-color: var(--text-primary);
+}
+
+.seamless-input::placeholder {
+  color: var(--text-secondary);
+}
+
+/* Remove number input spinners */
+.seamless-input[type="number"]::-webkit-inner-spin-button,
+.seamless-input[type="number"]::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+.seamless-input[type="number"] {
+  -moz-appearance: textfield;
+}
+
 /* Button styling */
 .btn-navy {
   background-color: var(--accent-primary);

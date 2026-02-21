@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { createTournament } from '../lib/api'
@@ -11,30 +11,25 @@ import { SwipeHint } from '../components/ui/SwipeHint'
 function CreateTournament() {
   const navigate = useNavigate()
   const { setTournament, setCurrentPlayer } = useLobbyStore()
-  const refNameRef = useRef<HTMLDivElement>(null)
-  const gamesRef = useRef<HTMLDivElement>(null)
-  const lobbyRef = useRef<HTMLDivElement>(null)
   
   useEffect(() => {
     document.title = 'UNCOLYMPICS - Create Tournament';
   }, []);
   
-  const [formData, setFormData] = useState({
-    refereeName: '',
-    numGames: 3,
-    roomCode: ''
-  })
+  const [refereeName, setRefereeName] = useState('')
+  const [numGames, setNumGames] = useState('3')
+  const [roomCode, setRoomCode] = useState('')
   const [loading, setLoading] = useState(false)
-  const [refNameEditing, setRefNameEditing] = useState(false)
-  const [gamesEditing, setGamesEditing] = useState(false)
-  const [lobbyEditing, setLobbyEditing] = useState(false)
+
+  const isFormValid = refereeName.trim() !== '' && roomCode.trim() !== ''
 
   const validateForm = (): string | null => {
-    if (!formData.refereeName.trim()) return 'Ref name is required'
-    if (!formData.roomCode.trim()) return 'Lobby code is required'
-    if (formData.roomCode.length > 5) return 'Lobby code must be 5 characters or less'
-    if (!/^[A-Z0-9]+$/.test(formData.roomCode)) return 'Lobby code must be alphanumeric'
-    if (formData.numGames < 1 || formData.numGames > 10) return 'Games must be between 1 and 10'
+    if (!refereeName.trim()) return 'Ref name is required'
+    if (!roomCode.trim()) return 'Lobby code is required'
+    if (roomCode.length > 5) return 'Lobby code must be 5 characters or less'
+    if (!/^[A-Z0-9]+$/i.test(roomCode)) return 'Lobby code must be alphanumeric'
+    const games = parseInt(numGames)
+    if (isNaN(games) || games < 1 || games > 10) return 'Games must be between 1 and 10'
     return null
   }
 
@@ -49,14 +44,14 @@ function CreateTournament() {
 
     try {
       const deviceId = getOrCreateDeviceId()
-      // Generate tournament name based on ref name and lobby code
-      const tournamentName = `${formData.refereeName}'s Tournament`
+      const tournamentName = `${refereeName.trim()}'s Tournament`
+      const games = parseInt(numGames) || 3
       
       const result = await createTournament(
         tournamentName,
-        formData.roomCode.trim().toUpperCase(),
-        formData.numGames,
-        formData.refereeName.trim(),
+        roomCode.trim().toUpperCase(),
+        games,
+        refereeName.trim(),
         deviceId
       )
 
@@ -72,63 +67,18 @@ function CreateTournament() {
     }
   }
 
-  const handleRefNameClick = () => {
-    setRefNameEditing(true)
-    setTimeout(() => refNameRef.current?.focus(), 0)
-  }
-
-  const handleGamesClick = () => {
-    setGamesEditing(true)
-    setTimeout(() => gamesRef.current?.focus(), 0)
-  }
-
-  const handleLobbyClick = () => {
-    setLobbyEditing(true)
-    setTimeout(() => lobbyRef.current?.focus(), 0)
-  }
-
-  const handleRefNameBlur = () => {
-    setRefNameEditing(false)
-  }
-
-  const handleGamesBlur = () => {
-    setGamesEditing(false)
-  }
-
-  const handleLobbyBlur = () => {
-    setLobbyEditing(false)
-  }
-
-  const handleRefNameInput = (e: React.FormEvent<HTMLDivElement>) => {
-    const target = e.target as HTMLDivElement
-    setFormData(prev => ({ ...prev, refereeName: target.textContent || '' }))
-  }
-
-  const handleGamesInput = (e: React.FormEvent<HTMLDivElement>) => {
-    const target = e.target as HTMLDivElement
-    const value = parseInt(target.textContent || '3')
-    if (!isNaN(value) && value >= 1 && value <= 10) {
-      setFormData(prev => ({ ...prev, numGames: value }))
-    }
-  }
-
-  const handleLobbyInput = (e: React.FormEvent<HTMLDivElement>) => {
-    const target = e.target as HTMLDivElement
-    setFormData(prev => ({ ...prev, roomCode: (target.textContent || '').toUpperCase() }))
-  }
-
   const handleBackNavigation = () => {
     navigate('/')
   }
 
-  // Add swipe-up functionality
+  // Swipe-up to create — only enabled when form is valid
   const { swipeHintRef } = useSwipeUp({
     onSwipe: handleCreate,
-    enabled: !loading && formData.refereeName.trim() !== '' && formData.roomCode.trim() !== ''
+    enabled: !loading && isFormValid
   })
 
   return (
-    <div ref={swipeHintRef} className="flex flex-col items-center justify-center min-h-screen relative space-y-16">
+    <div ref={swipeHintRef} className="flex flex-col items-center justify-center min-h-screen relative space-y-16 px-6">
       {/* Back navigation */}
       <button
         onClick={handleBackNavigation}
@@ -137,75 +87,70 @@ function CreateTournament() {
         ←
       </button>
 
-      {/* Animated elements */}
+      {/* Ref Name */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.6, delay: 0.2 }}
+        className="w-full max-w-md"
       >
-        <div
-          ref={refNameRef}
-          contentEditable={refNameEditing}
-          suppressContentEditableWarning={true}
-          onClick={handleRefNameClick}
-          onBlur={handleRefNameBlur}
-          onInput={handleRefNameInput}
-          className="seamless-editable text-6xl md:text-7xl font-heading text-primary text-center cursor-pointer"
-          data-placeholder="Ref Name"
-        >
-          {!refNameEditing && formData.refereeName ? formData.refereeName : ''}
-        </div>
+        <input
+          type="text"
+          value={refereeName}
+          onChange={(e) => setRefereeName(e.target.value)}
+          placeholder="Ref Name"
+          className="seamless-input text-6xl md:text-7xl font-heading text-primary text-center w-full"
+          autoComplete="off"
+        />
       </motion.div>
 
+      {/* Number of Games */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.6, delay: 0.4 }}
+        className="w-full max-w-md"
       >
-        <div
-          ref={gamesRef}
-          contentEditable={gamesEditing}
-          suppressContentEditableWarning={true}
-          onClick={handleGamesClick}
-          onBlur={handleGamesBlur}
-          onInput={handleGamesInput}
-          className="seamless-editable text-6xl md:text-7xl font-heading text-primary text-center cursor-pointer"
-          data-placeholder="Games"
-        >
-          {!gamesEditing && formData.numGames ? formData.numGames.toString() : ''}
-        </div>
+        <input
+          type="number"
+          value={numGames}
+          onChange={(e) => {
+            const v = e.target.value
+            if (v === '' || (parseInt(v) >= 1 && parseInt(v) <= 10)) {
+              setNumGames(v)
+            }
+          }}
+          placeholder="Games"
+          min={1}
+          max={10}
+          className="seamless-input text-6xl md:text-7xl font-heading text-primary text-center w-full"
+          autoComplete="off"
+        />
       </motion.div>
 
+      {/* Lobby Code */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.6, delay: 0.6 }}
+        className="w-full max-w-md"
       >
-        <div
-          ref={lobbyRef}
-          contentEditable={lobbyEditing}
-          suppressContentEditableWarning={true}
-          onClick={handleLobbyClick}
-          onBlur={handleLobbyBlur}
-          onInput={handleLobbyInput}
-          className="seamless-editable text-6xl md:text-7xl font-heading text-primary text-center cursor-pointer tracking-wider"
-          data-placeholder="Lobby #"
-          style={{ textTransform: 'uppercase' }}
-        >
-          {!lobbyEditing && formData.roomCode ? formData.roomCode : ''}
-        </div>
+        <input
+          type="text"
+          value={roomCode}
+          onChange={(e) => setRoomCode(e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 5))}
+          placeholder="Lobby #"
+          maxLength={5}
+          className="seamless-input text-6xl md:text-7xl font-heading text-primary text-center w-full tracking-wider uppercase"
+          autoComplete="off"
+        />
       </motion.div>
 
       {/* Swipe hint */}
       <SwipeHint 
         visible={!loading} 
-        text={
-          formData.refereeName.trim() !== '' && formData.roomCode.trim() !== ''
-            ? "↑ Swipe up to create"
-            : "Fill ref name & lobby code first"
-        }
+        text={isFormValid ? "↑ Swipe up to create" : "Fill ref name & lobby code"}
       />
-
     </div>
   )
 }
