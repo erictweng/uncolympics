@@ -15,10 +15,7 @@ async function cleanupStaleTournaments(): Promise<void> {
     // Find stale lobby tournaments
     const { data: staleTournaments, error: fetchError } = await supabase
       .from('tournaments')
-      .select(`
-        id,
-        players(count)
-      `)
+      .select('id')
       .eq('status', 'lobby')
       .lt('created_at', thirtyMinutesAgo)
     
@@ -29,15 +26,8 @@ async function cleanupStaleTournaments(): Promise<void> {
     
     if (!staleTournaments || staleTournaments.length === 0) return
     
-    // Filter tournaments with 0-1 players
-    const tournamentIdsToDelete = staleTournaments
-      .filter(tournament => {
-        const playerCount = (tournament.players as any)?.[0]?.count || 0
-        return playerCount <= 1
-      })
-      .map(tournament => tournament.id)
-    
-    if (tournamentIdsToDelete.length === 0) return
+    // Delete all stale lobby tournaments older than 30 min
+    const tournamentIdsToDelete = staleTournaments.map(tournament => tournament.id)
     
     // Delete stale tournaments (players will be cascade deleted)
     const { error: deleteError } = await supabase

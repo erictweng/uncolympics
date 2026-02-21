@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { supabase } from '../lib/supabase'
 import { useParams, useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import useLobbyStore from '../stores/lobbyStore'
@@ -6,8 +7,6 @@ import { subscribeTournament } from '../lib/sync'
 import { 
   fetchLobbyState, 
   createTeam, 
-  joinTeam, 
-  voteForLeader, 
   cancelTournament,
   leaveTournament
 } from '../lib/api'
@@ -28,8 +27,6 @@ function Lobby() {
     tournament,
     currentPlayer,
     players,
-    teams,
-    votes,
     connectionStatus,
     setTournament,
     setPlayers,
@@ -50,19 +47,11 @@ function Lobby() {
         setTeams(state.teams)
         setVotes(state.votes)
         
+        // Create teams if they don't exist (but don't auto-assign players)
         if (state.teams.length === 0) {
           const teamA = await createTeam(tournament.id, 'Team A')
           const teamB = await createTeam(tournament.id, 'Team B')
           setTeams([teamA, teamB])
-          
-          if (currentPlayer && currentPlayer.role !== 'spectator' && !currentPlayer.team_id) {
-            await joinTeam(currentPlayer.id, teamA.id)
-          }
-        } else if (currentPlayer && currentPlayer.role !== 'spectator' && !currentPlayer.team_id) {
-          const firstTeam = state.teams[0]
-          if (firstTeam) {
-            await joinTeam(currentPlayer.id, firstTeam.id)
-          }
         }
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Failed to load lobby')
@@ -81,9 +70,11 @@ function Lobby() {
     return unsubscribe
   }, [tournament?.id])
 
-  // Navigate when tournament status changes to 'picking'
+  // Navigate when tournament status changes
   useEffect(() => {
-    if (tournament?.status === 'picking' && roomCode) {
+    if (tournament?.status === 'team_select' && roomCode) {
+      navigate(`/team-select/${roomCode}`)
+    } else if (tournament?.status === 'picking' && roomCode) {
       navigate(`/game/${roomCode}/pick`)
     }
   }, [tournament?.status, roomCode, navigate])
@@ -92,21 +83,15 @@ function Lobby() {
     document.title = `UNCOLYMPICS - Lobby ${roomCode || ''}`;
   }, [roomCode]);
 
-  // Auto-vote for leader
-  useEffect(() => {
-    if (!currentPlayer || !teams.length || votes.length > 0) return
-    
-    const myTeam = teams.find(t => 
-      players.some(p => p.team_id === t.id && p.id === currentPlayer.id)
-    )
-    
-    if (myTeam && currentPlayer.role !== 'spectator') {
-      voteForLeader(myTeam.id, currentPlayer.id, currentPlayer.id).catch(() => {})
-    }
-  }, [currentPlayer, teams, players, votes.length])
+  // Leader assignment now happens in TeamSelection via random shuffle
 
   const handleStartTournament = async () => {
     if (!tournament || !roomCode) return
+    // Update status so all players navigate to team selection
+    await supabase
+      .from('tournaments')
+      .update({ status: 'team_select' })
+      .eq('id', tournament.id)
     navigate(`/team-select/${roomCode}`)
   }
 
