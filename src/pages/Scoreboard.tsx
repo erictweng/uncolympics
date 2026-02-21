@@ -87,47 +87,37 @@ function Scoreboard() {
   const leadingTeam = teams[0]
 
   return (
-    <div className="space-y-8">
-      {/* Header with back button */}
-      <div className="flex items-center gap-4">
-        <button
-          onClick={() => navigate(`/game/${roomCode}/pick`)}
-          className="text-accent-secondary hover:text-accent-primary transition-colors"
-        >
-          ← Back
-        </button>
-        <h1 className="text-3xl font-bold text-accent-primary neon-glow-primary">
-          📊 Scoreboard
+    <div className="min-h-screen px-6 pt-8 space-y-8">
+      {/* Header */}
+      <div className="mb-8">
+        <h1 className="font-heading text-5xl text-white leading-tight">
+          SCOREBOARD
         </h1>
       </div>
 
       {/* Team Score Section */}
-      <section className="bg-tertiary rounded-lg p-6 neon-border-secondary">
-        <h2 className="text-xl font-semibold text-accent-primary mb-4">Team Standings</h2>
-        <div className="space-y-4">
+      <section className="bg-white/5 backdrop-blur-md border border-white/10 rounded-2xl p-6">
+        <h2 className="font-heading text-2xl text-white mb-6">Team Standings</h2>
+        <div className="space-y-6">
           {teamPercentages.map((team, index) => (
             <motion.div
               key={team.id}
-              className="space-y-2"
+              className="space-y-3"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: index * 0.1 }}
             >
               <div className="flex justify-between items-center">
-                <span className={`font-medium ${index === 0 ? 'text-cyan-400' : 'text-pink-400'}`}>
+                <span className="font-body font-medium text-white text-lg">
                   {team.name}
                 </span>
-                <span className="text-secondary font-bold">
-                  {team.total_points} pts
+                <span className="font-heading text-3xl text-white">
+                  {team.total_points}
                 </span>
               </div>
-              <div className="bg-primary rounded-full h-8 overflow-hidden">
+              <div className="bg-white/5 rounded-full h-6 overflow-hidden backdrop-blur-sm">
                 <motion.div
-                  className={`h-full ${
-                    index === 0 
-                      ? 'bg-cyan-500 shadow-lg shadow-cyan-500/50' 
-                      : 'bg-pink-500 shadow-lg shadow-pink-500/50'
-                  } ${team.id === leadingTeam?.id ? 'shadow-glow' : ''}`}
+                  className="h-full bg-white/20 backdrop-blur-sm"
                   initial={{ width: 0 }}
                   animate={{ width: `${team.percentage}%` }}
                   transition={{ duration: 1, ease: 'easeOut', delay: index * 0.2 }}
@@ -139,8 +129,8 @@ function Scoreboard() {
       </section>
 
       {/* Title Leaderboard */}
-      <section className="bg-tertiary rounded-lg p-6 neon-border-secondary">
-        <h2 className="text-xl font-semibold text-accent-primary mb-4">Title Leaderboard</h2>
+      <section className="bg-white/5 backdrop-blur-md border border-white/10 rounded-2xl p-6">
+        <h2 className="font-heading text-2xl text-white mb-6">Title Leaderboard</h2>
         {titleLeaderboard.length > 0 ? (
           <motion.div 
             className="space-y-3"
@@ -157,7 +147,7 @@ function Scoreboard() {
             {titleLeaderboard.map((entry, index) => (
               <motion.div
                 key={entry.playerId}
-                className="flex items-center gap-4 p-3 bg-primary rounded-lg"
+                className="flex items-center gap-4 p-4 bg-white/5 backdrop-blur-sm border border-white/5 rounded-xl"
                 variants={{
                   hidden: { opacity: 0, x: -20 },
                   visible: { opacity: 1, x: 0 }
@@ -168,25 +158,25 @@ function Scoreboard() {
                 </span>
                 <div className="flex-1">
                   <div className="flex items-center gap-2">
-                    <span className="font-medium text-secondary">{entry.playerName}</span>
-                    <div className="w-3 h-3 rounded-full bg-accent-primary"></div>
+                    <span className="font-body font-medium text-white">{entry.playerName}</span>
+                    <div className="w-3 h-3 rounded-full bg-white/30"></div>
                   </div>
-                  <span className="text-sm text-tertiary">{entry.teamName}</span>
+                  <span className="font-body text-sm text-gray-400">{entry.teamName}</span>
                 </div>
-                <span className="font-bold text-accent-primary">
-                  {entry.titleCount} {entry.titleCount === 1 ? 'title' : 'titles'}
+                <span className="font-heading text-xl text-white">
+                  {entry.titleCount}
                 </span>
               </motion.div>
             ))}
           </motion.div>
         ) : (
-          <p className="text-tertiary text-center py-4">No titles yet</p>
+          <p className="text-gray-400 text-center py-4 font-body">No titles yet</p>
         )}
       </section>
 
       {/* Game History */}
-      <section className="bg-tertiary rounded-lg p-6 neon-border-secondary">
-        <h2 className="text-xl font-semibold text-accent-primary mb-4">Game History</h2>
+      <section className="bg-white/5 backdrop-blur-md border border-white/10 rounded-2xl p-6">
+        <h2 className="font-heading text-2xl text-white mb-6">Game History</h2>
         {games.length > 0 ? (
           <motion.div 
             className="space-y-3"
@@ -210,27 +200,27 @@ function Scoreboard() {
               return (
                 <motion.div
                   key={game.id}
-                  className="flex items-center gap-4 p-3 bg-primary rounded-lg"
+                  className="flex items-center gap-4 p-4 bg-white/5 backdrop-blur-sm border border-white/5 rounded-xl"
                   variants={{
                     hidden: { opacity: 0, y: 10 },
                     visible: { opacity: 1, y: 0 }
                   }}
                 >
-                  <span className="text-accent-secondary font-mono text-sm">
+                  <span className="text-gray-400 font-mono text-sm font-body">
                     {game.game_order}.
                   </span>
                   <span className="text-2xl">{game.gameType.emoji}</span>
                   <div className="flex-1">
-                    <div className="font-medium text-secondary">
+                    <div className="font-body font-medium text-white">
                       {game.gameType.name}
                     </div>
                     {game.winnerName && (
-                      <div className="text-sm text-accent-primary">
+                      <div className="font-body text-sm text-white">
                         → {game.winnerName}
                       </div>
                     )}
                     {gameTitles.length > 0 && (
-                      <div className="text-xs text-tertiary">
+                      <div className="font-body text-xs text-gray-400">
                         Key titles: {gameTitles.join(', ')}
                       </div>
                     )}
@@ -240,13 +230,13 @@ function Scoreboard() {
             })}
           </motion.div>
         ) : (
-          <p className="text-tertiary text-center py-4">No games completed yet</p>
+          <p className="text-gray-400 text-center py-4 font-body">No games completed yet</p>
         )}
       </section>
 
       {/* Player Chips */}
-      <section className="bg-tertiary rounded-lg p-6 neon-border-secondary">
-        <h2 className="text-xl font-semibold text-accent-primary mb-4">Player Details</h2>
+      <section className="bg-white/5 backdrop-blur-md border border-white/10 rounded-2xl p-6 mb-8">
+        <h2 className="font-heading text-2xl text-white mb-6">Player Details</h2>
         <div className="flex flex-wrap gap-3">
           {players.filter(p => p.team_id).map((player) => {
             const team = teams.find(t => t.id === player.team_id)
@@ -254,12 +244,9 @@ function Scoreboard() {
               <motion.button
                 key={player.id}
                 onClick={() => handlePlayerClick(player.id)}
-                className={`px-4 py-2 rounded-full text-sm font-medium transition-all
-                  ${team?.name?.toLowerCase().includes('team 1') || team?.name?.toLowerCase().includes('cyan') 
-                    ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/50 hover:bg-cyan-500/30' 
-                    : 'bg-pink-500/20 text-pink-300 border border-pink-500/50 hover:bg-pink-500/30'
-                  }
-                  hover:shadow-lg transform hover:scale-105`}
+                className="px-4 py-2 bg-white/10 backdrop-blur-sm border border-white/20 rounded-full 
+                          font-body text-sm font-medium text-white transition-all
+                          hover:bg-white/20 hover:border-white/30 transform hover:scale-105"
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
               >
@@ -281,7 +268,7 @@ function Scoreboard() {
             onClick={clearSelectedPlayer}
           >
             <motion.div
-              className="bg-secondary rounded-lg p-6 max-w-2xl w-full max-h-[80vh] overflow-y-auto neon-border-primary"
+              className="bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl p-6 max-w-2xl w-full max-h-[80vh] overflow-y-auto"
               initial={{ scale: 0.9, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.9, opacity: 0 }}
@@ -289,42 +276,42 @@ function Scoreboard() {
             >
               <div className="flex justify-between items-start mb-6">
                 <div>
-                  <h3 className="text-2xl font-bold text-accent-primary">
+                  <h3 className="font-heading text-3xl text-white">
                     {selectedPlayer.player.name}
                   </h3>
-                  <p className="text-tertiary">
+                  <p className="font-body text-gray-400">
                     {teams.find(t => t.id === selectedPlayer.player.team_id)?.name || 'No Team'}
                   </p>
                 </div>
                 <button
                   onClick={clearSelectedPlayer}
-                  className="text-tertiary hover:text-accent-primary text-2xl"
+                  className="text-gray-400 hover:text-white text-2xl"
                 >
                   ×
                 </button>
               </div>
 
               {/* Points Contributed */}
-              <div className="mb-6 p-4 bg-tertiary rounded-lg">
-                <h4 className="font-semibold text-accent-primary mb-2">Total Points Contributed</h4>
-                <p className="text-3xl font-bold text-accent-primary">
-                  {selectedPlayer.pointsContributed} pts
+              <div className="mb-6 p-4 bg-white/10 backdrop-blur-sm border border-white/10 rounded-xl">
+                <h4 className="font-heading text-xl text-white mb-2">Total Points Contributed</h4>
+                <p className="font-heading text-4xl text-white">
+                  {selectedPlayer.pointsContributed}
                 </p>
               </div>
 
               {/* Titles */}
               {selectedPlayer.titles.length > 0 && (
                 <div className="mb-6">
-                  <h4 className="font-semibold text-accent-primary mb-3">Titles Earned</h4>
+                  <h4 className="font-heading text-xl text-white mb-3">Titles Earned</h4>
                   <div className="space-y-2">
                     {selectedPlayer.titles.map((title) => (
-                      <div key={title.id} className="p-3 bg-tertiary rounded-lg">
+                      <div key={title.id} className="p-3 bg-white/10 backdrop-blur-sm border border-white/10 rounded-xl">
                         <div className="flex justify-between items-start">
                           <div>
-                            <h5 className="font-medium text-secondary">{title.title_name}</h5>
-                            <p className="text-sm text-tertiary">{title.title_desc}</p>
+                            <h5 className="font-body font-medium text-white">{title.title_name}</h5>
+                            <p className="font-body text-sm text-gray-400">{title.title_desc}</p>
                           </div>
-                          <span className="text-accent-primary font-bold">+{title.points}</span>
+                          <span className="font-heading text-white text-lg">+{title.points}</span>
                         </div>
                       </div>
                     ))}
@@ -335,26 +322,26 @@ function Scoreboard() {
               {/* Per-Game Stats */}
               {selectedPlayer.statsByGame.length > 0 && (
                 <div>
-                  <h4 className="font-semibold text-accent-primary mb-3">Game Performance</h4>
+                  <h4 className="font-heading text-xl text-white mb-3">Game Performance</h4>
                   <div className="space-y-4">
                     {selectedPlayer.statsByGame.map(({ game, stats }) => (
-                      <div key={game.id} className="p-4 bg-tertiary rounded-lg">
+                      <div key={game.id} className="p-4 bg-white/10 backdrop-blur-sm border border-white/10 rounded-xl">
                         <div className="flex items-center gap-3 mb-3">
                           <span className="text-2xl">{game.gameType.emoji}</span>
                           <div>
-                            <h5 className="font-medium text-secondary">{game.gameType.name}</h5>
+                            <h5 className="font-body font-medium text-white">{game.gameType.name}</h5>
                             {game.winnerName && (
-                              <p className="text-sm text-accent-primary">Winner: {game.winnerName}</p>
+                              <p className="font-body text-sm text-white">Winner: {game.winnerName}</p>
                             )}
                           </div>
                         </div>
                         <div className="grid grid-cols-2 gap-2">
                           {stats.map((stat) => (
-                            <div key={`${stat.stat_key}-${stat.id}`} className="text-sm">
-                              <span className="text-tertiary capitalize">
+                            <div key={`${stat.stat_key}-${stat.id}`} className="font-body text-sm">
+                              <span className="text-gray-400 capitalize">
                                 {stat.stat_key.replace('_', ' ')}:
                               </span>
-                              <span className="ml-2 text-secondary font-medium">
+                              <span className="ml-2 text-white font-medium">
                                 {stat.stat_value}
                               </span>
                             </div>
