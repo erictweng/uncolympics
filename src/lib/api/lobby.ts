@@ -37,10 +37,10 @@ export async function createTeam(tournamentId: string, name: string): Promise<Te
 }
 
 export async function updateTeamName(teamId: string, name: string): Promise<Team> {
-  const { data: team, error } = await supabase
-    .from('teams').update({ name }).eq('id', teamId).select().single()
-  if (error || !team) throw new Error(`Failed to update team name: ${error?.message}`)
-  return team
+  const { data: teamList, error } = await supabase
+    .from('teams').update({ name }).eq('id', teamId).select().limit(1)
+  if (error || !teamList || teamList.length === 0) throw new Error(`Failed to update team name: ${error?.message}`)
+  return teamList[0]
 }
 
 export async function joinTeam(playerId: string, teamId: string): Promise<Player> {

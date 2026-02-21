@@ -61,15 +61,15 @@ export async function submitDicePick(
   }
 
   // Save updated dice_roll_data
-  const { data: updated, error: updateErr } = await supabase
+  const { data: updatedList, error: updateErr } = await supabase
     .from('tournaments')
     .update({ dice_roll_data: current })
     .eq('id', tournamentId)
     .select()
-    .single()
+    .limit(1)
 
-  if (updateErr || !updated) throw new Error(`Failed to update dice roll: ${updateErr?.message}`)
-  return updated
+  if (updateErr || !updatedList || updatedList.length === 0) throw new Error(`Failed to update dice roll: ${updateErr?.message}`)
+  return updatedList[0]
 }
 
 /**
@@ -89,15 +89,15 @@ export async function resetDiceRoll(tournamentId: string): Promise<Tournament> {
     round: current.round + 1
   }
 
-  const { data: updated, error: updateErr } = await supabase
+  const { data: updatedList, error: updateErr } = await supabase
     .from('tournaments')
     .update({ dice_roll_data: reset })
     .eq('id', tournamentId)
     .select()
-    .single()
+    .limit(1)
 
-  if (updateErr || !updated) throw new Error(`Failed to reset dice roll: ${updateErr?.message}`)
-  return updated
+  if (updateErr || !updatedList || updatedList.length === 0) throw new Error(`Failed to reset dice roll: ${updateErr?.message}`)
+  return updatedList[0]
 }
 
 /**
@@ -112,13 +112,13 @@ export async function confirmDiceWinner(tournamentId: string): Promise<Tournamen
   const rollData: DiceRollData | null = tournament.dice_roll_data
   if (!rollData?.winnerId) throw new Error('No dice roll winner to confirm')
 
-  const { data: updated, error: updateErr } = await supabase
+  const { data: updatedList, error: updateErr } = await supabase
     .from('tournaments')
     .update({ current_pick_team: rollData.winnerId })
     .eq('id', tournamentId)
     .select()
-    .single()
+    .limit(1)
 
-  if (updateErr || !updated) throw new Error(`Failed to confirm winner: ${updateErr?.message}`)
-  return updated
+  if (updateErr || !updatedList || updatedList.length === 0) throw new Error(`Failed to confirm winner: ${updateErr?.message}`)
+  return updatedList[0]
 }

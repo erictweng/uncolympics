@@ -116,16 +116,16 @@ export async function advanceToNextRound(tournamentId: string, gameId: string): 
       .neq('id', tournament.current_pick_team).single()
     if (otherTeamError || !otherTeam) throw new Error(`Failed to find other team: ${otherTeamError?.message}`)
 
-    const { data: updated, error: updateError } = await supabase
+    const { data: updatedList, error: updateError } = await supabase
       .from('tournaments')
       .update({ status: 'picking', current_pick_team: otherTeam.id })
-      .eq('id', tournamentId).select().single()
-    if (updateError || !updated) throw new Error(`Failed to update tournament: ${updateError?.message}`)
-    return { tournament: updated, isLastGame: false }
+      .eq('id', tournamentId).select().limit(1)
+    if (updateError || !updatedList || updatedList.length === 0) throw new Error(`Failed to update tournament: ${updateError?.message}`)
+    return { tournament: updatedList[0], isLastGame: false }
   } else {
-    const { data: updated, error: updateError } = await supabase
-      .from('tournaments').update({ status: 'completed' }).eq('id', tournamentId).select().single()
-    if (updateError || !updated) throw new Error(`Failed to complete tournament: ${updateError?.message}`)
-    return { tournament: updated, isLastGame: true }
+    const { data: updatedList, error: updateError } = await supabase
+      .from('tournaments').update({ status: 'completed' }).eq('id', tournamentId).select().limit(1)
+    if (updateError || !updatedList || updatedList.length === 0) throw new Error(`Failed to complete tournament: ${updateError?.message}`)
+    return { tournament: updatedList[0], isLastGame: true }
   }
 }

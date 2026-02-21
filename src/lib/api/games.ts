@@ -91,11 +91,12 @@ export async function pickGame(
     .from('teams').select('id').eq('tournament_id', tournamentId).neq('id', teamId).single()
   if (otherTeamError || !otherTeam) throw new Error(`Failed to find other team: ${otherTeamError?.message}`)
 
-  const { data: updatedTournament, error: updateError } = await supabase
+  const { data: updatedTournamentList, error: updateError } = await supabase
     .from('tournaments')
     .update({ current_pick_team: otherTeam.id, status: 'playing' })
-    .eq('id', tournamentId).select().single()
-  if (updateError || !updatedTournament) throw new Error(`Failed to update tournament: ${updateError?.message}`)
+    .eq('id', tournamentId).select().limit(1)
+  if (updateError || !updatedTournamentList || updatedTournamentList.length === 0) throw new Error(`Failed to update tournament: ${updateError?.message}`)
+  const updatedTournament = updatedTournamentList[0]
 
   return { game: newGame, tournament: updatedTournament }
 }
@@ -150,15 +151,15 @@ export async function submitGameResult(
 export async function endGame(
   tournamentId: string, gameId: string
 ): Promise<{ game: Game; tournament: Tournament }> {
-  const { data: game, error: gameError } = await supabase
-    .from('games').update({ status: 'titles' }).eq('id', gameId).select().single()
-  if (gameError || !game) throw new Error(`Failed to update game status: ${gameError?.message}`)
+  const { data: gameList, error: gameError } = await supabase
+    .from('games').update({ status: 'titles' }).eq('id', gameId).select().limit(1)
+  if (gameError || !gameList || gameList.length === 0) throw new Error(`Failed to update game status: ${gameError?.message}`)
 
-  const { data: tournament, error: tournamentError } = await supabase
-    .from('tournaments').update({ status: 'scoring' }).eq('id', tournamentId).select().single()
-  if (tournamentError || !tournament) throw new Error(`Failed to update tournament status: ${tournamentError?.message}`)
+  const { data: tournamentList, error: tournamentError } = await supabase
+    .from('tournaments').update({ status: 'scoring' }).eq('id', tournamentId).select().limit(1)
+  if (tournamentError || !tournamentList || tournamentList.length === 0) throw new Error(`Failed to update tournament status: ${tournamentError?.message}`)
 
-  return { game, tournament }
+  return { game: gameList[0], tournament: tournamentList[0] }
 }
 
 export async function createCustomGameType(tournamentId: string, gameData: {

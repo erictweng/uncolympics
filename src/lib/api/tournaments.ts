@@ -267,15 +267,15 @@ export async function startTournament(tournamentId: string): Promise<Tournament>
     new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
   )[0]
 
-  const { data: tournament, error } = await supabase
+  const { data: tournamentList, error } = await supabase
     .from('tournaments')
     .update({ status: 'picking', current_pick_team: firstTeam.id })
     .eq('id', tournamentId)
     .select()
-    .single()
+    .limit(1)
 
-  if (error || !tournament) throw new Error(`Failed to start tournament: ${error?.message}`)
-  return tournament
+  if (error || !tournamentList || tournamentList.length === 0) throw new Error(`Failed to start tournament: ${error?.message}`)
+  return tournamentList[0]
 }
 
 export async function cancelTournament(tournamentId: string): Promise<void> {
