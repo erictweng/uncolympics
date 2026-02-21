@@ -74,7 +74,7 @@ function GamePick() {
   // Reconnect on refresh — handles state recovery + realtime + redirect
   const reconnectStatus = useReconnect(true)
 
-  const { tournament, currentPlayer, teams, connectionStatus } = useLobbyStore()
+  const { tournament, currentPlayer, teams, connectionStatus, players } = useLobbyStore()
   const {
     availableGames,
     pickedGames,
@@ -85,6 +85,11 @@ function GamePick() {
     setCurrentPickTeam,
     setCurrentRound
   } = useGamePlayStore()
+
+  // Update document title
+  useEffect(() => {
+    document.title = 'UNCOLYMPICS - Game Pick';
+  }, []);
 
   // Load initial data
   useEffect(() => {
@@ -159,12 +164,7 @@ function GamePick() {
     }
   }
 
-  // Update document title
-  useEffect(() => {
-    document.title = 'UNCOLYMPICS - Game Pick';
-  }, []);
-  
-    if (reconnectStatus === 'expired' || reconnectStatus === 'error') {
+  if (reconnectStatus === 'expired' || reconnectStatus === 'error') {
     return (
       <div className="min-h-screen flex items-center justify-center flex-col gap-4">
         <div className="text-xl text-gray-400">Session expired</div>
@@ -194,7 +194,6 @@ function GamePick() {
   }
 
   const currentTeam = teams.find(team => team.id === currentPickTeam)
-  const { players } = useLobbyStore()
   const currentLeader = currentPlayer && players
     .find(player => player.team_id === currentPickTeam && player.is_leader)
   
