@@ -37,7 +37,7 @@ function Home() {
 
   function handleReconnect() {
     if (!reconnectData) return
-    const { tournament, player } = reconnectData
+    const { tournament } = reconnectData
     const code = tournament.room_code
 
     switch (tournament.status) {

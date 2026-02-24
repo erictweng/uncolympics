@@ -36,7 +36,7 @@ function ScrollToTop() {
 
 function App() {
   return (
-    <Router>
+    <Router basename="/uncolympics">
       <NavigationSetter />
       <ScrollToTop />
       <Layout>
