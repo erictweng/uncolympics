@@ -36,7 +36,7 @@ function ScrollToTop() {
 
 function App() {
   return (
-    <Router basename="/uncolympics">
+    <Router basename={import.meta.env.BASE_URL}>
       <NavigationSetter />
       <ScrollToTop />
       <Layout>
