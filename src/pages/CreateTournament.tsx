@@ -64,8 +64,13 @@ function CreateTournament() {
 
       setTournament(result.tournament)
       setCurrentPlayer(result.player)
-      // Show lobby content inline
+      // Show lobby content inline for seamless transition
       setLobbyReady(true)
+      // After transition animation settles, navigate to real Lobby page
+      // (which has swipe-up-to-start, swipe-down-to-leave, etc.)
+      setTimeout(() => {
+        navigate(`/lobby/${roomCode.trim().toUpperCase()}`, { replace: true })
+      }, 1200)
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to create tournament'
       toast.error(errorMessage)
