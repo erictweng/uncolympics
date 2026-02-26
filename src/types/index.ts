@@ -3,7 +3,7 @@ export interface Tournament {
   id: string
   room_code: string
   name: string
-  status: 'lobby' | 'team_select' | 'picking' | 'playing' | 'scoring' | 'completed'
+  status: 'lobby' | 'team_select' | 'shuffling' | 'picking' | 'playing' | 'scoring' | 'completed'
   num_games: number
   time_est_min: number
   referee_id: string

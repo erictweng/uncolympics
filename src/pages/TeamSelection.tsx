@@ -2,7 +2,7 @@ import { useEffect, useState, useMemo, useCallback } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence, LayoutGroup } from 'framer-motion'
 import useLobbyStore from '../stores/lobbyStore'
-import { joinTeam, startTournament, assignRandomLeaders, fetchLobbyState } from '../lib/api'
+import { joinTeam, startTournament, assignRandomLeaders, fetchLobbyState, setTournamentShuffling } from '../lib/api'
 import { toast } from '../lib/toast'
 import { useReconnect } from '../hooks/useReconnect'
 
@@ -129,36 +129,81 @@ function TeamSelection() {
   const handleReady = async () => {
     if (!tournament) return
     try {
+      // Set shuffling status so all clients see the animation
+      await setTournamentShuffling(tournament.id)
+      // Assign leaders in DB (triggers realtime updates to all clients)
       await assignRandomLeaders(tournament.id)
-      setPhase('shuffling')
 
+      // Referee plays animation locally too (phase set via useEffect below for all clients)
+      // After shuffle + reveal animation, start the tournament
+      // Total time: 2.5s shuffle + 2.5s reveal
+      // Start tournament after shuffle completes — reveal continues while picking status propagates
       setTimeout(async () => {
-        const state = await fetchLobbyState(tournament.id)
-        setPlayers(state.players)
-
-        const leaders: Record<string, string> = {}
-        for (const team of state.teams) {
-          const leader = state.players.find((p: any) => p.team_id === team.id && p.is_leader)
-          if (leader) leaders[team.id] = leader.id
+        try {
+          await startTournament(tournament.id)
+        } catch {
+          toast.error('Failed to start tournament')
+          setPhase('locked')
         }
-        setRevealedLeaders(leaders)
-        setPhase('revealed')
-
-        setTimeout(async () => {
-          try {
-            await startTournament(tournament.id)
-            navigate(`/game/${tournament.room_code}/pick`)
-          } catch {
-            toast.error('Failed to start tournament')
-            setPhase('locked')
-          }
-        }, 2500)
-      }, 2500)
+      }, 5000)
     } catch {
       toast.error('Failed to assign leaders')
       setPhase('locked')
     }
   }
+
+  // Detect shuffling status from realtime tournament updates (for all clients)
+  useEffect(() => {
+    if (tournament?.status === 'shuffling' && phase !== 'shuffling' && phase !== 'revealed') {
+      setPhase('shuffling')
+
+      // After 2.5s of shuffling, fetch latest state and reveal leaders
+      const timer = setTimeout(async () => {
+        try {
+          const state = await fetchLobbyState(tournament.id)
+          setPlayers(state.players)
+
+          const leaders: Record<string, string> = {}
+          for (const team of state.teams) {
+            const leader = state.players.find((p: any) => p.team_id === team.id && p.is_leader)
+            if (leader) leaders[team.id] = leader.id
+          }
+          setRevealedLeaders(leaders)
+          setPhase('revealed')
+        } catch {
+          // If fetch fails, still try to reveal from current store state
+          const leaders: Record<string, string> = {}
+          for (const team of teams) {
+            const leader = activePlayers.find(p => p.team_id === team.id && p.is_leader)
+            if (leader) leaders[team.id] = leader.id
+          }
+          setRevealedLeaders(leaders)
+          setPhase('revealed')
+        }
+      }, 2500)
+
+      return () => clearTimeout(timer)
+    }
+  }, [tournament?.status])
+
+  // Navigate when tournament moves to picking (after reveal animation)
+  useEffect(() => {
+    if (tournament?.status === 'picking' && tournament?.room_code) {
+      // If we already saw the reveal, navigate after a short delay
+      // If we missed the animation, navigate immediately
+      if (phase === 'revealed') {
+        // Picking status arrives ~2.5s after reveal started, give a brief moment then navigate
+        const timer = setTimeout(() => {
+          navigate(`/game/${tournament.room_code}/pick`)
+        }, 500)
+        return () => clearTimeout(timer)
+      } else if (phase !== 'shuffling') {
+        // Missed animation entirely, just navigate
+        navigate(`/game/${tournament.room_code}/pick`)
+      }
+      // If still shuffling, the revealed phase will handle navigation
+    }
+  }, [tournament?.status, phase])
 
   // Shuffle animation
   useEffect(() => {

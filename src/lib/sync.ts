@@ -66,8 +66,12 @@ export function subscribeTournament(tournamentId: string) {
               appNavigate(`/team-select/${tournament.room_code}`);
             }, exitDelay);
           }
+        } else if (tournament.status === 'shuffling') {
+          // Stay on team-select page — the shuffle animation plays there
         } else if (tournament.status === 'picking') {
-          if (!normalizedUrl.includes('/pick')) {
+          if (!normalizedUrl.includes('/pick') && !normalizedUrl.includes('/team-select')) {
+            // Don't auto-navigate from team-select — TeamSelection handles its own
+            // navigation after the leader shuffle animation completes
             appNavigate(`/game/${tournament.room_code}/pick`);
           }
         } else if (tournament.status === 'scoring') {

@@ -294,6 +294,14 @@ export async function cancelTournament(tournamentId: string): Promise<void> {
   }
 }
 
+export async function setTournamentShuffling(tournamentId: string): Promise<void> {
+  const { error } = await supabase
+    .from('tournaments')
+    .update({ status: 'shuffling' })
+    .eq('id', tournamentId)
+  if (error) throw new Error(`Failed to set shuffling status: ${error.message}`)
+}
+
 export async function assignRandomLeaders(tournamentId: string): Promise<void> {
   // Get all teams with their players
   const { data: teams, error: teamsError } = await supabase

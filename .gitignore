@@ -106,4 +106,4 @@ public
 
 # Temporary folders
 tmp/
-temp/
+temp/test-reconnect.mjs
