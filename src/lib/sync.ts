@@ -51,8 +51,12 @@ export function subscribeTournament(tournamentId: string) {
 
         // Handle navigation based on tournament status changes
         const currentUrl = window.location.pathname;
+        const base = (import.meta.env.BASE_URL || '/').replace(/\/$/, '');
+        const normalizedUrl = base && currentUrl.startsWith(base)
+          ? currentUrl.slice(base.length) || '/'
+          : currentUrl;
         if (tournament.status === 'team_select') {
-          if (!currentUrl.includes('/team-select')) {
+          if (!normalizedUrl.includes('/team-select')) {
             // Trigger lobby exit animation before navigating
             const lobbyExitEvent = new CustomEvent('lobby-exit');
             window.dispatchEvent(lobbyExitEvent);
@@ -63,11 +67,15 @@ export function subscribeTournament(tournamentId: string) {
             }, exitDelay);
           }
         } else if (tournament.status === 'picking') {
-          if (!currentUrl.includes('/pick')) {
+          if (!normalizedUrl.includes('/pick')) {
             appNavigate(`/game/${tournament.room_code}/pick`);
           }
+        } else if (tournament.status === 'scoring') {
+          if (!normalizedUrl.includes('/scoreboard')) {
+            appNavigate(`/scoreboard/${tournament.room_code}`);
+          }
         } else if (tournament.status === 'completed') {
-          if (!currentUrl.includes('/ceremony')) {
+          if (!normalizedUrl.includes('/ceremony')) {
             appNavigate(`/ceremony/${tournament.room_code}`);
           }
         }

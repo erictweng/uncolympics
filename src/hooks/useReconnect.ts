@@ -134,8 +134,41 @@ export function useReconnect(shouldNavigate: boolean = true): ReconnectStatus {
 
     reconnect()
 
+    // Re-fetch state when tab becomes visible (handles missed realtime events)
+    const handleVisibilityChange = async () => {
+      if (document.hidden) return
+      
+      const deviceId = getOrCreateDeviceId()
+      try {
+        const result = await reconnectPlayer(deviceId)
+        if (!result) return // Tournament gone — don't force expired, let user stay
+        
+        const { setTournament: setT, setPlayers: setP, setTeams: setTe, setVotes: setV } = useLobbyStore.getState()
+        setT(result.tournament)
+
+        // Fetch full state to catch any missed updates
+        try {
+          const lobbyState = await fetchLobbyState(result.tournament.id)
+          setP(lobbyState.players)
+          setTe(lobbyState.teams)
+          setV(lobbyState.votes)
+        } catch (err) {
+          console.error('Failed to refresh lobby state on tab focus:', err)
+        }
+
+        // Navigate if tournament status changed while away
+        if (shouldNavigate) {
+          navigateToStatus(result.tournament, navigate)
+        }
+      } catch (err) {
+        console.error('Visibility change reconnect failed:', err)
+      }
+    }
+    document.addEventListener('visibilitychange', handleVisibilityChange)
+
     // Cleanup subscription on unmount
     return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange)
       if (unsubRef.current) {
         unsubRef.current()
         unsubRef.current = null
@@ -187,7 +220,13 @@ function navigateToStatus(
   }
 
   // Only navigate if we're not already on the right page
-  if (!currentPath.startsWith(targetPath.split('/:')[0]) && currentPath !== targetPath) {
+  // Strip BASE_URL prefix for comparison (handles GitHub Pages /uncolympics/ prefix)
+  const base = (import.meta.env.BASE_URL || '/').replace(/\/$/, '')
+  const normalizedPath = base && currentPath.startsWith(base) 
+    ? currentPath.slice(base.length) || '/' 
+    : currentPath
+
+  if (!normalizedPath.startsWith(targetPath) && normalizedPath !== targetPath) {
     navigate(targetPath)
   }
 }
