@@ -73,10 +73,10 @@ function Lobby() {
     const exitDuration = players.length * 100 + 400 // stagger + base
     await supabase
       .from('tournaments')
-      .update({ status: 'team_select' })
+      .update({ status: 'game_setup' })
       .eq('id', tournament.id)
     setTimeout(() => {
-      navigate(`/team-select/${roomCode}`)
+      navigate(`/game-setup/${roomCode}`)
     }, exitDuration)
   }
 

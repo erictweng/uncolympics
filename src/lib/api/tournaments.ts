@@ -269,7 +269,7 @@ export async function startTournament(tournamentId: string): Promise<Tournament>
 
   const { data: tournamentList, error } = await supabase
     .from('tournaments')
-    .update({ status: 'picking', current_pick_team: firstTeam.id })
+    .update({ status: 'playing', current_pick_team: firstTeam.id })
     .eq('id', tournamentId)
     .select()
     .limit(1)

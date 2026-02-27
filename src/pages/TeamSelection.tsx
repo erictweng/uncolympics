@@ -186,20 +186,19 @@ function TeamSelection() {
     }
   }, [tournament?.status])
 
-  // Navigate when tournament moves to picking (after reveal animation)
+  // Navigate when tournament moves to playing (after reveal animation)
   useEffect(() => {
-    if (tournament?.status === 'picking' && tournament?.room_code) {
+    if ((tournament?.status === 'picking' || tournament?.status === 'playing') && tournament?.room_code) {
       // If we already saw the reveal, navigate after a short delay
       // If we missed the animation, navigate immediately
       if (phase === 'revealed') {
-        // Picking status arrives ~2.5s after reveal started, give a brief moment then navigate
         const timer = setTimeout(() => {
-          navigate(`/game/${tournament.room_code}/pick`)
+          navigate(`/game-hub/${tournament.room_code}`)
         }, 500)
         return () => clearTimeout(timer)
       } else if (phase !== 'shuffling') {
         // Missed animation entirely, just navigate
-        navigate(`/game/${tournament.room_code}/pick`)
+        navigate(`/game-hub/${tournament.room_code}`)
       }
       // If still shuffling, the revealed phase will handle navigation
     }

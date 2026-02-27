@@ -1,13 +1,16 @@
 // Tournament and Player types (existing in store/api)
+export type TournamentStatus = 'lobby' | 'game_setup' | 'team_select' | 'shuffling' | 'picking' | 'playing' | 'scoring' | 'completed'
+
 export interface Tournament {
   id: string
   room_code: string
   name: string
-  status: 'lobby' | 'team_select' | 'shuffling' | 'picking' | 'playing' | 'scoring' | 'completed'
+  status: TournamentStatus
   num_games: number
   time_est_min: number
   referee_id: string
   current_pick_team: string | null
+  current_game_index: number
   dice_roll_data: DiceRollData | null
   created_at: string
 }
@@ -27,6 +30,8 @@ export interface Player {
   team_id: string | null
   role: 'referee' | 'player' | 'spectator'
   is_leader: boolean
+  tier: 'wonderkid' | 'rising_prospect' | 'certified' | 'seasoned_veteran' | null
+  draft_order: number | null
   created_at: string
 }
 
@@ -45,6 +50,20 @@ export interface Game {
   status: 'pending' | 'active' | 'scoring' | 'titles' | 'completed'
   picked_by_team: string
   game_order: number
+  created_at: string
+}
+
+// Phase 1: Predetermined game format
+export interface GameV2 {
+  id: string
+  tournament_id: string
+  index: number
+  name: string
+  type: 'physical' | 'video'
+  status: 'upcoming' | 'active' | 'completed'
+  winner_team: 'A' | 'B' | null
+  points_a: number
+  points_b: number
   created_at: string
 }
 

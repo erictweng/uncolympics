@@ -55,7 +55,11 @@ export function subscribeTournament(tournamentId: string) {
         const normalizedUrl = base && currentUrl.startsWith(base)
           ? currentUrl.slice(base.length) || '/'
           : currentUrl;
-        if (tournament.status === 'team_select') {
+        if (tournament.status === 'game_setup') {
+          if (!normalizedUrl.includes('/game-setup')) {
+            appNavigate(`/game-setup/${tournament.room_code}`);
+          }
+        } else if (tournament.status === 'team_select') {
           if (!normalizedUrl.includes('/team-select')) {
             // Trigger lobby exit animation before navigating
             const lobbyExitEvent = new CustomEvent('lobby-exit');
@@ -70,9 +74,11 @@ export function subscribeTournament(tournamentId: string) {
           // Stay on team-select page — the shuffle animation plays there
         } else if (tournament.status === 'picking') {
           if (!normalizedUrl.includes('/pick') && !normalizedUrl.includes('/team-select')) {
-            // Don't auto-navigate from team-select — TeamSelection handles its own
-            // navigation after the leader shuffle animation completes
             appNavigate(`/game/${tournament.room_code}/pick`);
+          }
+        } else if (tournament.status === 'playing') {
+          if (!normalizedUrl.includes('/game-hub') && !normalizedUrl.includes('/play/')) {
+            appNavigate(`/game-hub/${tournament.room_code}`);
           }
         } else if (tournament.status === 'scoring') {
           if (!normalizedUrl.includes('/scoreboard')) {

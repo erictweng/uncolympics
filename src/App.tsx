@@ -17,6 +17,8 @@ import Scoreboard from './pages/Scoreboard'
 import TeamSelection from './pages/TeamSelection'
 import Ceremony from './pages/Ceremony'
 import History from './pages/History'
+import GameSetup from './pages/GameSetup'
+import GameHub from './pages/GameHub'
 
 function NavigationSetter() {
   const navigate = useNavigate();
@@ -47,6 +49,8 @@ function App() {
             <Route path="/join" element={<PageTransition><JoinTournament /></PageTransition>} />
             <Route path="/lobby/:roomCode" element={<PageTransition><Lobby /></PageTransition>} />
             <Route path="/team-select/:roomCode" element={<PageTransition><TeamSelection /></PageTransition>} />
+            <Route path="/game-setup/:roomCode" element={<PageTransition><GameSetup /></PageTransition>} />
+            <Route path="/game-hub/:roomCode" element={<PageTransition><GameHub /></PageTransition>} />
             <Route path="/game/:roomCode/pick" element={<PageTransition><GamePick /></PageTransition>} />
             <Route path="/game/:roomCode/play/:gameId" element={<PageTransition><GamePlay /></PageTransition>} />
             <Route path="/game/:roomCode/reveal/:gameId" element={<PageTransition><TitleReveal /></PageTransition>} />

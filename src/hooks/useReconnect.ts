@@ -197,6 +197,9 @@ function navigateToStatus(
     case 'lobby':
       targetPath = `/lobby/${rc}`
       break
+    case 'game_setup':
+      targetPath = `/game-setup/${rc}`
+      break
     case 'team_select':
       targetPath = `/team-select/${rc}`
       break
@@ -204,10 +207,9 @@ function navigateToStatus(
       targetPath = `/game/${rc}/pick`
       break
     case 'playing':
-      // For playing status, we'd need the current game ID
-      // If we're already on a play page, stay there
-      if (currentPath.includes('/play/')) return
-      targetPath = `/game/${rc}/pick`
+      // Phase 1: go to game-hub for predetermined game flow
+      if (currentPath.includes('/play/') || currentPath.includes('/game-hub')) return
+      targetPath = `/game-hub/${rc}`
       break
     case 'scoring':
       targetPath = `/scoreboard/${rc}`
