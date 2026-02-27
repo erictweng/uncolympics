@@ -146,7 +146,7 @@ function GameSetup() {
   if (reconnectStatus === 'expired') {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center gap-4 px-6">
-        <h1 className="text-2xl font-bebas text-white">Session Expired</h1>
+        <h1 className="text-2xl font-heading text-white">Session Expired</h1>
         <button onClick={() => navigate('/')} className="px-6 py-3 bg-yellow-400 text-black font-bold rounded-xl">
           Back to Home
         </button>
@@ -160,7 +160,7 @@ function GameSetup() {
       <motion.h1
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="text-4xl font-bebas text-center text-yellow-400 mb-2 tracking-wider"
+        className="text-4xl font-heading text-center text-yellow-400 mb-2 tracking-wider"
       >
         SET UP THE GAMES
       </motion.h1>
@@ -187,7 +187,7 @@ function GameSetup() {
             >
               <div className="flex items-center gap-3">
                 {/* Number */}
-                <div className="w-8 h-8 rounded-full bg-yellow-400/20 flex items-center justify-center text-yellow-400 font-bebas text-lg shrink-0">
+                <div className="w-8 h-8 rounded-full bg-yellow-400/20 flex items-center justify-center text-yellow-400 font-heading text-lg shrink-0">
                   {i + 1}
                 </div>
 
@@ -253,7 +253,7 @@ function GameSetup() {
           <button
             onClick={handleSaveAndStart}
             disabled={saving || slots.some(s => !s.name.trim())}
-            className={`w-full py-4 rounded-2xl font-bebas text-2xl tracking-wider transition-all ${
+            className={`w-full py-4 rounded-2xl font-heading text-2xl tracking-wider transition-all ${
               saving || slots.some(s => !s.name.trim())
                 ? 'bg-white/10 text-white/30 cursor-not-allowed'
                 : 'bg-yellow-400 text-black hover:bg-yellow-300 active:scale-95'

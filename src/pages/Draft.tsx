@@ -175,7 +175,7 @@ function Draft() {
   if (reconnectStatus === 'expired') {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center gap-4 px-6">
-        <h1 className="text-2xl font-bebas text-white">Session Expired</h1>
+        <h1 className="text-2xl font-heading text-white">Session Expired</h1>
         <button onClick={() => navigate('/')} className="px-6 py-3 bg-yellow-400 text-black font-bold rounded-xl">Back to Home</button>
       </div>
     )
@@ -188,7 +188,7 @@ function Draft() {
         <motion.h1
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="text-4xl font-bebas text-center text-yellow-400 mb-2 tracking-wider"
+          className="text-4xl font-heading text-center text-yellow-400 mb-2 tracking-wider"
         >
           SELECT CAPTAINS
         </motion.h1>
@@ -239,7 +239,7 @@ function Draft() {
                     <motion.span
                       initial={{ opacity: 0 }}
                       animate={{ opacity: 1 }}
-                      className="ml-auto text-sm font-bebas tracking-wider text-yellow-400/80"
+                      className="ml-auto text-sm font-heading tracking-wider text-yellow-400/80"
                     >
                       {captainIndex === 0 ? 'CAPTAIN A' : 'CAPTAIN B'}
                     </motion.span>
@@ -265,7 +265,7 @@ function Draft() {
             <button
               onClick={handleConfirmCaptains}
               disabled={saving}
-              className={`w-full py-4 rounded-2xl font-bebas text-2xl tracking-wider transition-all ${
+              className={`w-full py-4 rounded-2xl font-heading text-2xl tracking-wider transition-all ${
                 saving ? 'bg-white/10 text-white/30' : 'bg-yellow-400 text-black hover:bg-yellow-300 active:scale-95'
               }`}
             >
@@ -292,12 +292,12 @@ function Draft() {
           transition={{ type: 'spring', stiffness: 200, damping: 15 }}
           className="text-center"
         >
-          <h1 className="text-5xl font-bebas text-yellow-400 mb-4 tracking-wider">
+          <h1 className="text-5xl font-heading text-yellow-400 mb-4 tracking-wider">
             TEAMS ARE SET!
           </h1>
           <div className="flex gap-8 justify-center mb-8">
             <div className="text-center">
-              <h2 className="text-xl font-bebas text-white/80 mb-2">{teamA?.name || 'TEAM A'}</h2>
+              <h2 className="text-xl font-heading text-white/80 mb-2">{teamA?.name || 'TEAM A'}</h2>
               {teamAPlayers.map(p => (
                 <div key={p.id} className={`text-sm ${p.is_captain ? 'text-yellow-400 font-bold' : 'text-white/70'}`}>
                   {p.is_captain ? `👑 ${p.name}` : p.name}
@@ -305,7 +305,7 @@ function Draft() {
               ))}
             </div>
             <div className="text-center">
-              <h2 className="text-xl font-bebas text-white/80 mb-2">{teamB?.name || 'TEAM B'}</h2>
+              <h2 className="text-xl font-heading text-white/80 mb-2">{teamB?.name || 'TEAM B'}</h2>
               {teamBPlayers.map(p => (
                 <div key={p.id} className={`text-sm ${p.is_captain ? 'text-yellow-400 font-bold' : 'text-white/70'}`}>
                   {p.is_captain ? `👑 ${p.name}` : p.name}
@@ -335,7 +335,7 @@ function Draft() {
         animate={{ opacity: 1, y: 0 }}
         className="text-center mb-6"
       >
-        <h1 className="text-3xl font-bebas text-yellow-400 tracking-wider mb-1">
+        <h1 className="text-3xl font-heading text-yellow-400 tracking-wider mb-1">
           {currentTurnCaptain ? `${currentTurnCaptain.name.toUpperCase()}'S PICK` : 'DRAFT'}
         </h1>
         <p className="text-white/50 text-sm">
@@ -350,7 +350,7 @@ function Draft() {
 
       {/* Available Players */}
       <div className="mb-4">
-        <h2 className="text-sm font-bebas text-white/40 tracking-wider mb-2 px-1">AVAILABLE PLAYERS</h2>
+        <h2 className="text-sm font-heading text-white/40 tracking-wider mb-2 px-1">AVAILABLE PLAYERS</h2>
         <div className="space-y-2">
           <AnimatePresence mode="popLayout">
             {available.map((player) => (
@@ -369,7 +369,7 @@ function Draft() {
                 } ${justDrafted === player.id ? 'ring-2 ring-yellow-400' : ''}`}
               >
                 <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center text-white/60 font-bebas">
+                  <div className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center text-white/60 font-heading">
                     {player.name.charAt(0).toUpperCase()}
                   </div>
                   <span className="text-white text-lg font-medium">{player.name}</span>
@@ -404,7 +404,7 @@ function Draft() {
         <div className="flex gap-2 mb-3">
           <button
             onClick={() => setShowTeams(showTeams === 'A' ? null : 'A')}
-            className={`flex-1 py-2 rounded-xl font-bebas tracking-wider text-sm transition-all ${
+            className={`flex-1 py-2 rounded-xl font-heading tracking-wider text-sm transition-all ${
               showTeams === 'A' ? 'bg-blue-500/30 text-blue-300 border border-blue-500/40' : 'bg-white/5 text-white/40 border border-white/10'
             }`}
           >
@@ -412,7 +412,7 @@ function Draft() {
           </button>
           <button
             onClick={() => setShowTeams(showTeams === 'B' ? null : 'B')}
-            className={`flex-1 py-2 rounded-xl font-bebas tracking-wider text-sm transition-all ${
+            className={`flex-1 py-2 rounded-xl font-heading tracking-wider text-sm transition-all ${
               showTeams === 'B' ? 'bg-red-500/30 text-red-300 border border-red-500/40' : 'bg-white/5 text-white/40 border border-white/10'
             }`}
           >

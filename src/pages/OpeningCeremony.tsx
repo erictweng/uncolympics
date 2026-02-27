@@ -124,7 +124,7 @@ function OpeningCeremony() {
   if (reconnectStatus === 'expired') {
     return (
       <div className="min-h-screen bg-black flex flex-col items-center justify-center gap-4 px-6">
-        <h1 className="text-2xl font-bebas text-white">Session Expired</h1>
+        <h1 className="text-2xl font-heading text-white">Session Expired</h1>
         <button onClick={() => navigate('/')} className="px-6 py-3 bg-yellow-400 text-black font-bold rounded-xl">Back to Home</button>
       </div>
     )
@@ -148,7 +148,7 @@ function OpeningCeremony() {
               animate={{ scale: [1, 1.05, 1] }}
               transition={{ repeat: Infinity, duration: 2 }}
             >
-              <span className="font-bebas text-3xl text-yellow-400 tracking-wider">
+              <span className="font-heading text-3xl text-yellow-400 tracking-wider">
                 TAP TO BEGIN CEREMONY
               </span>
             </motion.button>
@@ -167,7 +167,7 @@ function OpeningCeremony() {
             className="text-center"
           >
             <motion.h1
-              className="font-bebas text-6xl md:text-8xl text-yellow-400 tracking-widest"
+              className="font-heading text-6xl md:text-8xl text-yellow-400 tracking-widest"
               style={{ textShadow: '0 0 40px rgba(250, 204, 21, 0.6), 0 0 80px rgba(250, 204, 21, 0.3)' }}
               animate={{ textShadow: ['0 0 40px rgba(250, 204, 21, 0.6)', '0 0 80px rgba(250, 204, 21, 0.8)', '0 0 40px rgba(250, 204, 21, 0.6)'] }}
               transition={{ repeat: Infinity, duration: 2 }}
@@ -178,7 +178,7 @@ function OpeningCeremony() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.5 }}
-              className="text-white/60 font-bebas text-2xl tracking-wider mt-4"
+              className="text-white/60 font-heading text-2xl tracking-wider mt-4"
             >
               PLAYER INTRODUCTIONS
             </motion.p>
@@ -225,7 +225,7 @@ function OpeningCeremony() {
                   />
                 ) : (
                   <div className="w-full h-full bg-white/10 flex items-center justify-center">
-                    <span className="text-5xl font-bebas text-white/60">
+                    <span className="text-5xl font-heading text-white/60">
                       {currentPlayerData.name.charAt(0).toUpperCase()}
                     </span>
                   </div>
@@ -238,7 +238,7 @@ function OpeningCeremony() {
               initial={{ opacity: 0, y: 30 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.3, duration: 0.4 }}
-              className="font-bebas text-5xl md:text-6xl text-white tracking-wider mb-3"
+              className="font-heading text-5xl md:text-6xl text-white tracking-wider mb-3"
             >
               {currentPlayerData.name.toUpperCase()}
             </motion.h2>
@@ -254,7 +254,7 @@ function OpeningCeremony() {
                 <span className="text-3xl mr-2">
                   {TIER_CONFIG[currentPlayerData.tier].emoji}
                 </span>
-                <span className={`font-bebas text-2xl tracking-wider ${TIER_CONFIG[currentPlayerData.tier].color}`}>
+                <span className={`font-heading text-2xl tracking-wider ${TIER_CONFIG[currentPlayerData.tier].color}`}>
                   {TIER_CONFIG[currentPlayerData.tier].label.toUpperCase()}
                 </span>
               </motion.div>
@@ -301,7 +301,7 @@ function OpeningCeremony() {
             className="text-center"
           >
             <motion.h1
-              className="font-bebas text-5xl md:text-7xl text-yellow-400 tracking-widest"
+              className="font-heading text-5xl md:text-7xl text-yellow-400 tracking-widest"
               style={{ textShadow: '0 0 40px rgba(250, 204, 21, 0.6), 0 0 80px rgba(250, 204, 21, 0.3)' }}
               animate={{ textShadow: ['0 0 40px rgba(250, 204, 21, 0.6)', '0 0 100px rgba(250, 204, 21, 0.9)', '0 0 40px rgba(250, 204, 21, 0.6)'] }}
               transition={{ repeat: Infinity, duration: 1.5 }}

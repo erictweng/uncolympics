@@ -116,7 +116,7 @@ function GameHub() {
   if (reconnectStatus === 'expired') {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center gap-4 px-6">
-        <h1 className="text-2xl font-bebas text-white">Session Expired</h1>
+        <h1 className="text-2xl font-heading text-white">Session Expired</h1>
         <button onClick={() => navigate('/')} className="px-6 py-3 bg-yellow-400 text-black font-bold rounded-xl">
           Back to Home
         </button>
@@ -130,7 +130,7 @@ function GameHub() {
       <motion.h1
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="text-3xl font-bebas text-center text-yellow-400 mb-4 tracking-wider"
+        className="text-3xl font-heading text-center text-yellow-400 mb-4 tracking-wider"
       >
         GAME HUB
       </motion.h1>
@@ -145,17 +145,17 @@ function GameHub() {
           {/* Team A */}
           <div className="text-center flex-1">
             <div className="text-xs text-white/50 uppercase tracking-wider mb-1">Team A</div>
-            <div className="text-4xl font-bebas text-blue-400">{winsA}</div>
+            <div className="text-4xl font-heading text-blue-400">{winsA}</div>
             <div className="text-xs text-white/40">{totalA} pts</div>
           </div>
 
           {/* Divider */}
-          <div className="text-white/20 text-2xl font-bebas px-4">VS</div>
+          <div className="text-white/20 text-2xl font-heading px-4">VS</div>
 
           {/* Team B */}
           <div className="text-center flex-1">
             <div className="text-xs text-white/50 uppercase tracking-wider mb-1">Team B</div>
-            <div className="text-4xl font-bebas text-red-400">{winsB}</div>
+            <div className="text-4xl font-heading text-red-400">{winsB}</div>
             <div className="text-xs text-white/40">{totalB} pts</div>
           </div>
         </div>
@@ -185,7 +185,7 @@ function GameHub() {
             >
               <div className="flex items-center gap-3">
                 {/* Game Number */}
-                <div className={`w-10 h-10 rounded-xl flex items-center justify-center font-bebas text-lg shrink-0 ${
+                <div className={`w-10 h-10 rounded-xl flex items-center justify-center font-heading text-lg shrink-0 ${
                   isActive ? 'bg-yellow-400 text-black' :
                   isCompleted ? 'bg-green-500/20 text-green-400' :
                   'bg-white/10 text-white/40'
@@ -254,7 +254,7 @@ function GameHub() {
           className="mt-6 bg-yellow-400/20 border border-yellow-400/40 rounded-2xl p-6 text-center"
         >
           <div className="text-3xl mb-2">🏆</div>
-          <div className="font-bebas text-2xl text-yellow-400">ALL GAMES COMPLETE!</div>
+          <div className="font-heading text-2xl text-yellow-400">ALL GAMES COMPLETE!</div>
           <div className="text-white/60 text-sm mt-1">Heading to final results...</div>
         </motion.div>
       )}
@@ -282,7 +282,7 @@ function GameHub() {
               onClick={e => e.stopPropagation()}
               className="bg-gray-900 border border-white/20 rounded-2xl p-6 w-full max-w-sm"
             >
-              <h2 className="font-bebas text-2xl text-yellow-400 text-center mb-1">END GAME</h2>
+              <h2 className="font-heading text-2xl text-yellow-400 text-center mb-1">END GAME</h2>
               <p className="text-white/60 text-sm text-center mb-6">{endGameModal.name}</p>
 
               {/* Winner Selection */}

@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 interface ConfirmModalProps {
   isOpen: boolean
   message: string
+  subtitle?: string
   onConfirm: () => void
   onCancel: () => void
   confirmText?: string
@@ -12,6 +13,7 @@ interface ConfirmModalProps {
 export function ConfirmModal({
   isOpen,
   message,
+  subtitle,
   onConfirm,
   onCancel,
   confirmText = 'Yes',
@@ -44,6 +46,9 @@ export function ConfirmModal({
                 <p className="text-white text-lg font-medium">
                   {message}
                 </p>
+                {subtitle && (
+                  <p className="text-gray-400 text-sm mt-2">{subtitle}</p>
+                )}
               </div>
               
               {/* Buttons */}

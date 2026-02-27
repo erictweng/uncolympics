@@ -4,6 +4,7 @@ import { motion } from 'framer-motion'
 import useLobbyStore from '../stores/lobbyStore'
 import useAuthStore from '../stores/authStore'
 import { reconnectPlayer } from '../lib/api/tournaments'
+import { ConfirmModal } from '../components/ui/ConfirmModal'
 import type { Tournament, Player } from '../types'
 
 function Home() {
@@ -11,6 +12,7 @@ function Home() {
   const { user, profile, signOut } = useAuthStore()
   const navigate = useNavigate()
   const [reconnectData, setReconnectData] = useState<{ tournament: Tournament; player: Player } | null>(null)
+  const [showRetakeModal, setShowRetakeModal] = useState(false)
 
   useEffect(() => {
     document.title = 'UNCOLYMPICS - Home'
@@ -117,27 +119,29 @@ function Home() {
         </Link>
       </motion.div>
 
-      {/* Retake Survey + Tier display */}
-      {profile && (
+      {/* Tier badge — tappable to retake survey */}
+      {profile?.tier && (
         <motion.div
           className="w-full max-w-sm text-center"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ duration: 0.4, delay: 2.0 }}
         >
-          {profile.tier && (
-            <span className="text-sm text-gray-500 mr-2">
+          <button
+            onClick={() => setShowRetakeModal(true)}
+            className="inline-flex items-center gap-2 text-sm text-gray-400 hover:text-gray-200 transition-all cursor-pointer bg-transparent border-none group"
+          >
+            <span>
               {profile.tier === 'wonderkid' && '🌟'}
               {profile.tier === 'rising_prospect' && '🔥'}
               {profile.tier === 'certified' && '✅'}
               {profile.tier === 'seasoned_veteran' && '👑'}
-              {' '}
-              {profile.tier.replace('_', ' ').replace(/\b\w/g, c => c.toUpperCase())}
             </span>
-          )}
-          <Link to="/survey" className="text-xs text-gray-600 hover:text-gray-400 transition-colors">
-            Retake Survey
-          </Link>
+            <span className="group-hover:underline decoration-gray-500 underline-offset-4">
+              {profile.tier.replace('_', ' ').replace(/\b\w/g, (c: string) => c.toUpperCase())}
+            </span>
+            <span className="text-xs text-gray-600 group-hover:text-gray-400 transition-colors">✏️</span>
+          </button>
         </motion.div>
       )}
 
@@ -157,6 +161,17 @@ function Home() {
           </button>
         </motion.div>
       )}
+
+      {/* Retake Survey Confirmation Modal */}
+      <ConfirmModal
+        isOpen={showRetakeModal}
+        message="Retake Survey?"
+        subtitle="Your current tier will be recalculated."
+        onConfirm={() => { setShowRetakeModal(false); navigate('/survey') }}
+        onCancel={() => setShowRetakeModal(false)}
+        confirmText="Yes"
+        cancelText="No"
+      />
     </div>
   )
 }
