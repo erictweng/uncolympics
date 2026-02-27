@@ -182,6 +182,9 @@ function navigateToStatus(
     case 'game_setup':
       targetPath = `/game-setup/${rc}`
       break
+    case 'ceremony':
+      targetPath = `/ceremony-open/${rc}`
+      break
     case 'drafting':
       targetPath = `/draft/${rc}`
       break

@@ -25,6 +25,7 @@ import History from './pages/History'
 import GameSetup from './pages/GameSetup'
 import GameHub from './pages/GameHub'
 import Draft from './pages/Draft'
+import OpeningCeremony from './pages/OpeningCeremony'
 
 function NavigationSetter() {
   const navigate = useNavigate();
@@ -64,6 +65,7 @@ function App() {
             <Route path="/lobby/:roomCode" element={<AuthGuard><SurveyGuard><PageTransition><Lobby /></PageTransition></SurveyGuard></AuthGuard>} />
             <Route path="/team-select/:roomCode" element={<AuthGuard><SurveyGuard><PageTransition><TeamSelection /></PageTransition></SurveyGuard></AuthGuard>} />
             <Route path="/game-setup/:roomCode" element={<AuthGuard><SurveyGuard><PageTransition><GameSetup /></PageTransition></SurveyGuard></AuthGuard>} />
+            <Route path="/ceremony-open/:roomCode" element={<AuthGuard><SurveyGuard><PageTransition><OpeningCeremony /></PageTransition></SurveyGuard></AuthGuard>} />
             <Route path="/draft/:roomCode" element={<AuthGuard><SurveyGuard><PageTransition><Draft /></PageTransition></SurveyGuard></AuthGuard>} />
             <Route path="/game-hub/:roomCode" element={<AuthGuard><SurveyGuard><PageTransition><GameHub /></PageTransition></SurveyGuard></AuthGuard>} />
             <Route path="/game/:roomCode/pick" element={<AuthGuard><SurveyGuard><PageTransition><GamePick /></PageTransition></SurveyGuard></AuthGuard>} />

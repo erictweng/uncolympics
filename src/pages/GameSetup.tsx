@@ -99,10 +99,10 @@ function GameSetup() {
       await deleteGamesV2(tournament.id)
       await createGamesV2(tournament.id, slots.map(s => ({ name: s.name.trim(), type: s.type })))
       
-      // Advance tournament to drafting
+      // Advance tournament to opening ceremony
       const { error: updateError } = await supabase
         .from('tournaments')
-        .update({ status: 'drafting' })
+        .update({ status: 'ceremony', ceremony_player_index: -1 })
         .eq('id', tournament.id)
       
       if (updateError) throw new Error(updateError.message)

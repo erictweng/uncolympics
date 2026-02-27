@@ -1,5 +1,5 @@
 // Tournament and Player types (existing in store/api)
-export type TournamentStatus = 'lobby' | 'game_setup' | 'drafting' | 'playing' | 'scoring' | 'completed'
+export type TournamentStatus = 'lobby' | 'game_setup' | 'ceremony' | 'drafting' | 'playing' | 'scoring' | 'completed'
 
 export interface Tournament {
   id: string
@@ -14,6 +14,7 @@ export interface Tournament {
   dice_roll_data: DiceRollData | null
   draft_turn: string | null
   draft_pick_number: number
+  ceremony_player_index: number
   created_at: string
 }
 

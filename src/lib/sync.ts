@@ -59,6 +59,10 @@ export function subscribeTournament(tournamentId: string) {
           if (!normalizedUrl.includes('/game-setup')) {
             appNavigate(`/game-setup/${tournament.room_code}`);
           }
+        } else if (tournament.status === 'ceremony') {
+          if (!normalizedUrl.includes('/ceremony-open')) {
+            appNavigate(`/ceremony-open/${tournament.room_code}`);
+          }
         } else if (tournament.status === 'drafting') {
           if (!normalizedUrl.includes('/draft')) {
             appNavigate(`/draft/${tournament.room_code}`);
