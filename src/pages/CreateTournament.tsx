@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { createTournament } from '../lib/api'
-import { getOrCreateDeviceId } from '../lib/device'
+import useAuthStore from '../stores/authStore'
 import useLobbyStore from '../stores/lobbyStore'
 import { toast } from '../lib/toast'
 import { useSwipeUp } from '../hooks/useSwipeUp'
@@ -12,23 +12,22 @@ import { LobbyInline } from '../components/LobbyInline'
 function CreateTournament() {
   const navigate = useNavigate()
   const { setTournament, setCurrentPlayer, resetLobby } = useLobbyStore()
+  const { user, profile } = useAuthStore()
   
   useEffect(() => {
     resetLobby()
     document.title = 'UNCOLYMPICS - Create Tournament';
   }, []);
   
-  const [refereeName, setRefereeName] = useState('')
   const [numGames, setNumGames] = useState('')
   const [roomCode, setRoomCode] = useState('')
   const [loading, setLoading] = useState(false)
   const [transitioning, setTransitioning] = useState(false)
   const [lobbyReady, setLobbyReady] = useState(false)
 
-  const isFormValid = refereeName.trim() !== '' && roomCode.trim() !== '' && numGames.trim() !== ''
+  const isFormValid = roomCode.trim() !== '' && numGames.trim() !== ''
 
   const validateForm = (): string | null => {
-    if (!refereeName.trim()) return 'Ref name is required'
     if (!roomCode.trim()) return 'Lobby code is required'
     if (roomCode.length > 5) return 'Lobby code must be 5 characters or less'
     if (!/^[A-Z0-9]+$/i.test(roomCode)) return 'Lobby code must be alphanumeric'
@@ -45,36 +44,35 @@ function CreateTournament() {
       return
     }
 
-    // Start transition — animate form out
+    if (!user || !profile) {
+      toast.error('Not signed in')
+      return
+    }
+
     setTransitioning(true)
     setLoading(true)
 
     try {
-      const deviceId = getOrCreateDeviceId()
-      const tournamentName = `${refereeName.trim()}'s Tournament`
+      const tournamentName = `${profile.name}'s Tournament`
       const games = parseInt(numGames) || 3
       
       const result = await createTournament(
         tournamentName,
         roomCode.trim().toUpperCase(),
         games,
-        refereeName.trim(),
-        deviceId
+        profile.name,
+        user.id
       )
 
       setTournament(result.tournament)
       setCurrentPlayer(result.player)
-      // Show lobby content inline for seamless transition
       setLobbyReady(true)
-      // After transition animation settles, navigate to real Lobby page
-      // (which has swipe-up-to-start, swipe-down-to-leave, etc.)
       setTimeout(() => {
         navigate(`/lobby/${roomCode.trim().toUpperCase()}`, { replace: true })
       }, 1200)
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to create tournament'
       toast.error(errorMessage)
-      // Revert transition on error
       setTransitioning(false)
     } finally {
       setLoading(false)
@@ -85,7 +83,6 @@ function CreateTournament() {
     navigate('/')
   }
 
-  // Swipe-up to create — only enabled when form is valid
   const { swipeHintRef } = useSwipeUp({
     onSwipe: handleCreate,
     enabled: !loading && !transitioning && isFormValid
@@ -93,7 +90,6 @@ function CreateTournament() {
 
   return (
     <div ref={swipeHintRef} className="flex flex-col items-center justify-center min-h-screen relative">
-      {/* Back navigation - disappears instantly when transitioning */}
       {!transitioning && (
         <button
           onClick={handleBackNavigation}
@@ -103,7 +99,21 @@ function CreateTournament() {
         </button>
       )}
 
-      {/* Form fields — animate out on transition */}
+      {/* Show who's creating */}
+      {!transitioning && profile && (
+        <motion.div
+          className="absolute top-8 right-8 flex items-center gap-2"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.3 }}
+        >
+          {profile.avatar_url && (
+            <img src={profile.avatar_url} alt="" className="w-7 h-7 rounded-full" referrerPolicy="no-referrer" />
+          )}
+          <span className="text-sm text-gray-400">{profile.name}</span>
+        </motion.div>
+      )}
+
       <AnimatePresence>
         {!transitioning && (
           <motion.div
@@ -111,29 +121,11 @@ function CreateTournament() {
             exit={{ y: -500, opacity: 0 }}
             transition={{ duration: 0.5, ease: 'easeIn' }}
           >
-
-            {/* Ref Name */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: 0.2 }}
-              className="w-full max-w-md"
-            >
-              <input
-                type="text"
-                value={refereeName}
-                onChange={(e) => setRefereeName(e.target.value)}
-                placeholder="Ref Name"
-                className="seamless-input text-4xl md:text-5xl font-heading text-primary text-center w-full"
-                autoComplete="off"
-              />
-            </motion.div>
-
             {/* Number of Games */}
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: 0.4 }}
+              transition={{ duration: 0.6, delay: 0.2 }}
               className="w-full max-w-md"
             >
               <input
@@ -157,7 +149,7 @@ function CreateTournament() {
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: 0.6 }}
+              transition={{ duration: 0.6, delay: 0.4 }}
               className="w-full max-w-md"
             >
               <input
@@ -171,16 +163,14 @@ function CreateTournament() {
               />
             </motion.div>
 
-            {/* Swipe hint */}
             <SwipeHint 
               visible={!loading} 
-              text={isFormValid ? "↑ Swipe up to create" : "Fill ref name, games & lobby code"}
+              text={isFormValid ? "↑ Swipe up to create" : "Fill games & lobby code"}
             />
           </motion.div>
         )}
       </AnimatePresence>
 
-      {/* Lobby content — rendered inline after successful create */}
       <LobbyInline active={lobbyReady} />
     </div>
   )

@@ -3,16 +3,11 @@ import type { Tournament, Player } from '../../types'
 
 /**
  * Clean up stale tournaments in lobby status
- * Deletes tournaments that are:
- * - In 'lobby' status
- * - Older than 30 minutes
- * - Have 0-1 players (including referee)
  */
 async function cleanupStaleTournaments(): Promise<void> {
   try {
     const thirtyMinutesAgo = new Date(Date.now() - 30 * 60 * 1000).toISOString()
     
-    // Find stale lobby tournaments
     const { data: staleTournaments, error: fetchError } = await supabase
       .from('tournaments')
       .select('id')
@@ -26,10 +21,8 @@ async function cleanupStaleTournaments(): Promise<void> {
     
     if (!staleTournaments || staleTournaments.length === 0) return
     
-    // Delete all stale lobby tournaments older than 30 min
     const tournamentIdsToDelete = staleTournaments.map(tournament => tournament.id)
     
-    // Delete stale tournaments (players will be cascade deleted)
     const { error: deleteError } = await supabase
       .from('tournaments')
       .delete()
@@ -48,9 +41,8 @@ export async function createTournament(
   roomCode: string,
   numGames: number,
   refereeName: string,
-  deviceId: string
+  userId: string
 ): Promise<{ tournament: Tournament; player: Player }> {
-  // Clean up stale tournaments (fire-and-forget)
   cleanupStaleTournaments().catch(error => 
     console.error('Background cleanup failed:', error)
   )
@@ -59,18 +51,17 @@ export async function createTournament(
     throw new Error('Room code must be 1-5 characters, alphanumeric, and uppercase')
   }
 
-  // Delete any existing lobby tournament from the same device_id (handles referee refresh)
+  // Delete any existing lobby tournament from the same user_id (handles referee refresh)
   const { data: existingReferee } = await supabase
     .from('players')
     .select('tournament_id')
-    .eq('device_id', deviceId)
+    .eq('user_id', userId)
     .eq('role', 'referee')
     .limit(1)
 
   if (existingReferee && existingReferee.length > 0) {
     const tournamentId = existingReferee[0].tournament_id
     
-    // Check if this tournament is still in lobby status
     const { data: existingTournaments } = await supabase
       .from('tournaments')
       .select('id, status')
@@ -87,7 +78,7 @@ export async function createTournament(
     }
   }
 
-  // Clean up any stale tournaments with this room code before checking
+  // Clean up stale tournaments with this room code
   const { data: existingTournaments } = await supabase
     .from('tournaments')
     .select('id, status, created_at')
@@ -95,7 +86,6 @@ export async function createTournament(
     .neq('status', 'completed')
 
   if (existingTournaments && existingTournaments.length > 0) {
-    // Delete stale lobby tournaments with this room code (older than 5 min)
     const fiveMinAgo = new Date(Date.now() - 5 * 60 * 1000).toISOString()
     const staleIds = existingTournaments
       .filter(t => t.status === 'lobby' && t.created_at < fiveMinAgo)
@@ -105,7 +95,6 @@ export async function createTournament(
       await supabase.from('tournaments').delete().in('id', staleIds)
     }
 
-    // Re-check: any active (non-stale) tournaments still using this code?
     const remaining = existingTournaments.filter(t => !staleIds.includes(t.id))
     if (remaining.length > 0) {
       throw new Error('Room code already exists')
@@ -132,7 +121,8 @@ export async function createTournament(
     .insert({
       tournament_id: tournament.id,
       name: refereeName,
-      device_id: deviceId,
+      user_id: userId,
+      device_id: userId, // backward compat
       role: 'referee',
       is_leader: true,
       team_id: null
@@ -178,10 +168,9 @@ export async function validateRoomCode(
 export async function joinTournament(
   roomCode: string,
   playerName: string,
-  deviceId: string,
+  userId: string,
   role: 'player' | 'spectator'
 ): Promise<{ tournament: Tournament; player: Player }> {
-  // Clean up stale tournaments (fire-and-forget)
   cleanupStaleTournaments().catch(error => 
     console.error('Background cleanup failed:', error)
   )
@@ -194,11 +183,12 @@ export async function joinTournament(
   const tournament = validation.tournament
   if (tournament.status !== 'lobby') throw new Error('Tournament has already started')
 
+  // Check if user already joined (by user_id)
   const { data: existingPlayers } = await supabase
     .from('players')
     .select('*')
     .eq('tournament_id', tournament.id)
-    .eq('device_id', deviceId)
+    .eq('user_id', userId)
     .limit(1)
 
   if (existingPlayers && existingPlayers.length > 0) return { tournament, player: existingPlayers[0] }
@@ -208,7 +198,8 @@ export async function joinTournament(
     .insert({
       tournament_id: tournament.id,
       name: playerName,
-      device_id: deviceId,
+      user_id: userId,
+      device_id: userId, // backward compat
       role,
       is_leader: false,
       team_id: null
@@ -221,14 +212,13 @@ export async function joinTournament(
 }
 
 export async function reconnectPlayer(
-  deviceId: string
+  userId: string
 ): Promise<{ tournament: Tournament; player: Player } | null> {
-  // Two-step query: fetch player first, then check tournament status separately
-  // (inner join + .neq on joined table can silently return 0 rows in some Supabase/PostgREST versions)
+  // Try user_id first, fall back to device_id for backward compat
   const { data, error } = await supabase
     .from('players')
     .select(`*, tournament:tournaments!fk_players_tournament(*)`)
-    .eq('device_id', deviceId)
+    .or(`user_id.eq.${userId},device_id.eq.${userId}`)
     .order('created_at', { ascending: false })
     .limit(5)
 
@@ -236,13 +226,11 @@ export async function reconnectPlayer(
 
   if (error || !data || data.length === 0) return null
 
-  // Find the first player whose tournament is not completed
   const match = data.find(
     (row: any) => row.tournament && row.tournament.status !== 'completed'
   )
   if (!match) return null
 
-  // Strip the nested tournament from the player object to keep types clean
   const { tournament: t, ...playerFields } = match as any
   return { tournament: t as Tournament, player: playerFields as Player }
 }
@@ -303,7 +291,6 @@ export async function setTournamentShuffling(tournamentId: string): Promise<void
 }
 
 export async function assignRandomLeaders(tournamentId: string): Promise<void> {
-  // Get all teams with their players
   const { data: teams, error: teamsError } = await supabase
     .from('teams')
     .select(`id, players(id)`)
@@ -311,7 +298,6 @@ export async function assignRandomLeaders(tournamentId: string): Promise<void> {
 
   if (teamsError) throw new Error(`Failed to fetch teams: ${teamsError.message}`)
 
-  // Reset all leaders first
   const { error: resetError } = await supabase
     .from('players')
     .update({ is_leader: false })
@@ -319,7 +305,6 @@ export async function assignRandomLeaders(tournamentId: string): Promise<void> {
 
   if (resetError) throw new Error(`Failed to reset leaders: ${resetError.message}`)
 
-  // For each team, randomly pick one player as leader
   for (const team of (teams || [])) {
     const players = (team.players as any[]) || []
     if (players.length === 0) continue
@@ -335,7 +320,6 @@ export async function assignRandomLeaders(tournamentId: string): Promise<void> {
 
 export async function leaveTournament(playerId: string): Promise<void> {
   try {
-    // First, get the player to check if they are a leader
     const { data: players, error: fetchError } = await supabase
       .from('players')
       .select('id, team_id, is_leader')
@@ -346,7 +330,6 @@ export async function leaveTournament(playerId: string): Promise<void> {
     const player = players?.[0]
     if (!player) throw new Error('Player not found')
 
-    // If the player is a leader, we need to remove their leader status first
     if (player.is_leader && player.team_id) {
       const { error: leaderError } = await supabase
         .from('players')
@@ -356,7 +339,6 @@ export async function leaveTournament(playerId: string): Promise<void> {
       if (leaderError) throw new Error(`Failed to remove leader status: ${leaderError.message}`)
     }
 
-    // Now delete the player (CASCADE will handle related data)
     const { error: deleteError } = await supabase
       .from('players')
       .delete()

@@ -3,10 +3,13 @@ import { AnimatePresence } from 'framer-motion'
 import { useEffect } from 'react'
 import Layout from './components/Layout'
 import { PageTransition } from './components/PageTransition'
+import { AuthGuard } from './components/AuthGuard'
 import { setNavigate } from './lib/navigation'
 
 // Import page components
 import Home from './pages/Home'
+import Login from './pages/Login'
+import AuthCallback from './pages/AuthCallback'
 import CreateTournament from './pages/CreateTournament'
 import JoinTournament from './pages/JoinTournament'
 import Lobby from './pages/Lobby'
@@ -45,20 +48,25 @@ function App() {
       <Layout>
         <AnimatePresence mode="wait">
           <Routes>
-            <Route path="/" element={<PageTransition><Home /></PageTransition>} />
-            <Route path="/create" element={<PageTransition><CreateTournament /></PageTransition>} />
-            <Route path="/join" element={<PageTransition><JoinTournament /></PageTransition>} />
-            <Route path="/lobby/:roomCode" element={<PageTransition><Lobby /></PageTransition>} />
-            <Route path="/team-select/:roomCode" element={<PageTransition><TeamSelection /></PageTransition>} />
-            <Route path="/game-setup/:roomCode" element={<PageTransition><GameSetup /></PageTransition>} />
-            <Route path="/draft/:roomCode" element={<PageTransition><Draft /></PageTransition>} />
-            <Route path="/game-hub/:roomCode" element={<PageTransition><GameHub /></PageTransition>} />
-            <Route path="/game/:roomCode/pick" element={<PageTransition><GamePick /></PageTransition>} />
-            <Route path="/game/:roomCode/play/:gameId" element={<PageTransition><GamePlay /></PageTransition>} />
-            <Route path="/game/:roomCode/reveal/:gameId" element={<PageTransition><TitleReveal /></PageTransition>} />
-            <Route path="/scoreboard/:roomCode" element={<PageTransition><Scoreboard /></PageTransition>} />
-            <Route path="/ceremony/:roomCode" element={<PageTransition><Ceremony /></PageTransition>} />
-            <Route path="/history" element={<PageTransition><History /></PageTransition>} />
+            {/* Public routes */}
+            <Route path="/login" element={<PageTransition><Login /></PageTransition>} />
+            <Route path="/auth/callback" element={<AuthCallback />} />
+
+            {/* Protected routes */}
+            <Route path="/" element={<AuthGuard><PageTransition><Home /></PageTransition></AuthGuard>} />
+            <Route path="/create" element={<AuthGuard><PageTransition><CreateTournament /></PageTransition></AuthGuard>} />
+            <Route path="/join" element={<AuthGuard><PageTransition><JoinTournament /></PageTransition></AuthGuard>} />
+            <Route path="/lobby/:roomCode" element={<AuthGuard><PageTransition><Lobby /></PageTransition></AuthGuard>} />
+            <Route path="/team-select/:roomCode" element={<AuthGuard><PageTransition><TeamSelection /></PageTransition></AuthGuard>} />
+            <Route path="/game-setup/:roomCode" element={<AuthGuard><PageTransition><GameSetup /></PageTransition></AuthGuard>} />
+            <Route path="/draft/:roomCode" element={<AuthGuard><PageTransition><Draft /></PageTransition></AuthGuard>} />
+            <Route path="/game-hub/:roomCode" element={<AuthGuard><PageTransition><GameHub /></PageTransition></AuthGuard>} />
+            <Route path="/game/:roomCode/pick" element={<AuthGuard><PageTransition><GamePick /></PageTransition></AuthGuard>} />
+            <Route path="/game/:roomCode/play/:gameId" element={<AuthGuard><PageTransition><GamePlay /></PageTransition></AuthGuard>} />
+            <Route path="/game/:roomCode/reveal/:gameId" element={<AuthGuard><PageTransition><TitleReveal /></PageTransition></AuthGuard>} />
+            <Route path="/scoreboard/:roomCode" element={<AuthGuard><PageTransition><Scoreboard /></PageTransition></AuthGuard>} />
+            <Route path="/ceremony/:roomCode" element={<AuthGuard><PageTransition><Ceremony /></PageTransition></AuthGuard>} />
+            <Route path="/history" element={<AuthGuard><PageTransition><History /></PageTransition></AuthGuard>} />
           </Routes>
         </AnimatePresence>
       </Layout>

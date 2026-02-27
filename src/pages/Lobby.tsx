@@ -214,7 +214,7 @@ function Lobby() {
                 }}
               >
                 <div
-                  className="font-heading leading-tight"
+                  className="font-heading leading-tight flex items-center gap-3"
                   style={{ 
                     fontSize: `${fontSize}vh`,
                     color: isMe ? '#ffffff' : '#9ca3af'

@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { joinTournament } from '../lib/api'
-import { getOrCreateDeviceId } from '../lib/device'
+import useAuthStore from '../stores/authStore'
 import useLobbyStore from '../stores/lobbyStore'
 import { toast } from '../lib/toast'
 import { useSwipeUp } from '../hooks/useSwipeUp'
@@ -12,23 +12,22 @@ import { LobbyInline } from '../components/LobbyInline'
 function JoinTournament() {
   const navigate = useNavigate()
   const { setTournament, setCurrentPlayer, resetLobby } = useLobbyStore()
+  const { user, profile } = useAuthStore()
   
   useEffect(() => {
     resetLobby()
     document.title = 'UNCOLYMPICS - Join Tournament';
   }, []);
   
-  const [playerName, setPlayerName] = useState('')
   const [roomCode, setRoomCode] = useState('')
   const [loading, setLoading] = useState(false)
   const [transitioning, setTransitioning] = useState(false)
   const [lobbyReady, setLobbyReady] = useState(false)
 
-  const isFormValid = playerName.trim() !== '' && roomCode.trim() !== ''
+  const isFormValid = roomCode.trim() !== ''
 
   const validateForm = (): string | null => {
     if (!roomCode.trim()) return 'Lobby code is required'
-    if (!playerName.trim()) return 'Name is required'
     if (roomCode.length > 5) return 'Lobby code must be 5 characters or less'
     if (!/^[A-Z0-9]+$/i.test(roomCode)) return 'Lobby code must be alphanumeric'
     return null
@@ -41,24 +40,25 @@ function JoinTournament() {
       return
     }
 
-    // Start transition — animate form out
+    if (!user || !profile) {
+      toast.error('Not signed in')
+      return
+    }
+
     setTransitioning(true)
     setLoading(true)
 
     try {
-      const deviceId = getOrCreateDeviceId()
       const result = await joinTournament(
         roomCode.trim().toUpperCase(),
-        playerName.trim(),
-        deviceId,
+        profile.name,
+        user.id,
         'player'
       )
 
       setTournament(result.tournament)
       setCurrentPlayer(result.player)
-      // Show lobby content inline for seamless transition
       setLobbyReady(true)
-      // After transition animation settles, navigate to real Lobby page
       setTimeout(() => {
         navigate(`/lobby/${roomCode.trim().toUpperCase()}`, { replace: true })
       }, 1200)
@@ -72,7 +72,6 @@ function JoinTournament() {
       } else {
         toast.error(errorMessage)
       }
-      // Revert transition on error
       setTransitioning(false)
     } finally {
       setLoading(false)
@@ -83,7 +82,6 @@ function JoinTournament() {
     navigate('/')
   }
 
-  // Swipe-up to join — only enabled when form is valid
   const { swipeHintRef } = useSwipeUp({
     onSwipe: handleJoin,
     enabled: !loading && !transitioning && isFormValid
@@ -91,7 +89,6 @@ function JoinTournament() {
 
   return (
     <div ref={swipeHintRef} className="flex flex-col items-center justify-center min-h-screen relative">
-      {/* Back navigation - disappears instantly when transitioning */}
       {!transitioning && (
         <button
           onClick={handleBackNavigation}
@@ -101,7 +98,21 @@ function JoinTournament() {
         </button>
       )}
 
-      {/* Form fields — animate out on transition */}
+      {/* Show who's joining */}
+      {!transitioning && profile && (
+        <motion.div
+          className="absolute top-8 right-8 flex items-center gap-2"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.3 }}
+        >
+          {profile.avatar_url && (
+            <img src={profile.avatar_url} alt="" className="w-7 h-7 rounded-full" referrerPolicy="no-referrer" />
+          )}
+          <span className="text-sm text-gray-400">{profile.name}</span>
+        </motion.div>
+      )}
+
       <AnimatePresence>
         {!transitioning && (
           <motion.div
@@ -109,29 +120,11 @@ function JoinTournament() {
             exit={{ y: -500, opacity: 0 }}
             transition={{ duration: 0.5, ease: 'easeIn' }}
           >
-
-            {/* Name */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: 0.2 }}
-              className="mb-12 w-full max-w-md"
-            >
-              <input
-                type="text"
-                value={playerName}
-                onChange={(e) => setPlayerName(e.target.value)}
-                placeholder="Name"
-                className="seamless-input text-4xl md:text-5xl font-heading text-primary text-center w-full"
-                autoComplete="off"
-              />
-            </motion.div>
-
             {/* Lobby Code */}
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: 0.4 }}
+              transition={{ duration: 0.6, delay: 0.2 }}
               className="mb-12 w-full max-w-md"
             >
               <input
@@ -145,16 +138,14 @@ function JoinTournament() {
               />
             </motion.div>
 
-            {/* Swipe hint */}
             <SwipeHint 
               visible={!loading} 
-              text={isFormValid ? "↑ Swipe up to join" : "Fill name & lobby code"}
+              text={isFormValid ? "↑ Swipe up to join" : "Enter lobby code"}
             />
           </motion.div>
         )}
       </AnimatePresence>
 
-      {/* Lobby content — rendered inline after successful join */}
       <LobbyInline active={lobbyReady} />
     </div>
   )

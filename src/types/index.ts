@@ -29,6 +29,7 @@ export interface Player {
   tournament_id: string
   name: string
   device_id: string
+  user_id: string | null
   team_id: string | null
   role: 'referee' | 'player' | 'spectator'
   is_leader: boolean
@@ -165,6 +166,19 @@ export interface CeremonyData {
   winningTeam: Team | null
   isTied: boolean
   titleLeaderboard: LeaderboardEntry[]
+}
+
+// Auth / Profile types
+export interface Profile {
+  id: string
+  name: string
+  avatar_url: string | null
+  email: string | null
+  tier: 'wonderkid' | 'rising_prospect' | 'certified' | 'seasoned_veteran' | null
+  survey_responses: Record<string, any> | null
+  survey_complete: boolean
+  created_at: string
+  updated_at: string
 }
 
 // Dead types removed: TournamentSummary, TournamentRecap (were unused)
