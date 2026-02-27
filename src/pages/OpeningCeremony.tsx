@@ -10,8 +10,8 @@ import { useReconnect } from '../hooks/useReconnect'
 const TIER_CONFIG: Record<string, { label: string; emoji: string; color: string; glow: string }> = {
   wonderkid: { label: 'Wonderkid', emoji: '🌟', color: 'text-blue-400', glow: 'shadow-blue-500/50' },
   rising_prospect: { label: 'Rising Prospect', emoji: '🔥', color: 'text-orange-400', glow: 'shadow-orange-500/50' },
-  certified: { label: 'Certified', emoji: '✅', color: 'text-green-400', glow: 'shadow-green-500/50' },
-  seasoned_veteran: { label: 'Seasoned Veteran', emoji: '👑', color: 'text-yellow-400', glow: 'shadow-yellow-500/50' },
+  certified: { label: 'Certified UNC', emoji: '✅', color: 'text-green-400', glow: 'shadow-green-500/50' },
+  seasoned_veteran: { label: 'Seasoned UNC', emoji: '👑', color: 'text-yellow-400', glow: 'shadow-yellow-500/50' },
 }
 
 const SURVEY_LABELS = ['Competitive', 'Athletic', 'Clutch', 'Trash Talk', 'Gaming', 'Strategic']

@@ -61,8 +61,8 @@ const TOTAL = ALL_QUESTIONS.length // 33
 const TIER_INFO: Record<string, { label: string; emoji: string }> = {
   wonderkid: { label: 'Wonderkid', emoji: '🌟' },
   rising_prospect: { label: 'Rising Prospect', emoji: '🔥' },
-  certified: { label: 'Certified', emoji: '✅' },
-  seasoned_veteran: { label: 'Seasoned Veteran', emoji: '👑' },
+  certified: { label: 'Certified UNC', emoji: '✅' },
+  seasoned_veteran: { label: 'Seasoned UNC', emoji: '👑' },
 }
 
 function calculateTier(totalChecks: number): string {
