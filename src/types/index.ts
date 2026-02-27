@@ -11,18 +11,10 @@ export interface Tournament {
   referee_id: string
   current_pick_team: string | null
   current_game_index: number
-  dice_roll_data: DiceRollData | null
   draft_turn: string | null
   draft_pick_number: number
   ceremony_player_index: number
   created_at: string
-}
-
-export interface DiceRollData {
-  picks: Record<string, number>  // teamId -> chosen number (1-6)
-  target: number | null          // random target (1-6), set after both pick
-  winnerId: string | null        // winning team id
-  round: number                  // roll round (1+, increments on tie)
 }
 
 export interface Player {

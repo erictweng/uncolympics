@@ -8,7 +8,6 @@ export { saveTitles, saveGlobalTitles, updateTeamPoints, fetchTitlesForGame, adv
 export { fetchScoreboard, fetchPlayerDetail } from './scoreboard'
 export { fetchCeremonyData } from './ceremony'
 export { fetchTournamentHistory, fetchTournamentDetail } from './history'
-export { submitDicePick, resetDiceRoll, confirmDiceWinner } from './diceroll'
 export { createGamesV2, getGamesV2, updateGameV2, startGameV2, endGameV2, getCurrentGameV2, deleteGamesV2 } from './gamesV2'
 export { selectCaptains, getAvailablePlayers, draftPlayer, getDraftState, startDraft, finishDraft, getSnakeDraftTeam } from './draft'
 export { getPlayersWithProfiles } from './openingCeremony'
