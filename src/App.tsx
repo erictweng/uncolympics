@@ -19,6 +19,7 @@ import Ceremony from './pages/Ceremony'
 import History from './pages/History'
 import GameSetup from './pages/GameSetup'
 import GameHub from './pages/GameHub'
+import Draft from './pages/Draft'
 
 function NavigationSetter() {
   const navigate = useNavigate();
@@ -50,6 +51,7 @@ function App() {
             <Route path="/lobby/:roomCode" element={<PageTransition><Lobby /></PageTransition>} />
             <Route path="/team-select/:roomCode" element={<PageTransition><TeamSelection /></PageTransition>} />
             <Route path="/game-setup/:roomCode" element={<PageTransition><GameSetup /></PageTransition>} />
+            <Route path="/draft/:roomCode" element={<PageTransition><Draft /></PageTransition>} />
             <Route path="/game-hub/:roomCode" element={<PageTransition><GameHub /></PageTransition>} />
             <Route path="/game/:roomCode/pick" element={<PageTransition><GamePick /></PageTransition>} />
             <Route path="/game/:roomCode/play/:gameId" element={<PageTransition><GamePlay /></PageTransition>} />

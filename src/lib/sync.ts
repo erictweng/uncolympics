@@ -59,22 +59,9 @@ export function subscribeTournament(tournamentId: string) {
           if (!normalizedUrl.includes('/game-setup')) {
             appNavigate(`/game-setup/${tournament.room_code}`);
           }
-        } else if (tournament.status === 'team_select') {
-          if (!normalizedUrl.includes('/team-select')) {
-            // Trigger lobby exit animation before navigating
-            const lobbyExitEvent = new CustomEvent('lobby-exit');
-            window.dispatchEvent(lobbyExitEvent);
-            const playerCount = useLobbyStore.getState().players.length;
-            const exitDelay = playerCount * 100 + 400;
-            setTimeout(() => {
-              appNavigate(`/team-select/${tournament.room_code}`);
-            }, exitDelay);
-          }
-        } else if (tournament.status === 'shuffling') {
-          // Stay on team-select page — the shuffle animation plays there
-        } else if (tournament.status === 'picking') {
-          if (!normalizedUrl.includes('/pick') && !normalizedUrl.includes('/team-select')) {
-            appNavigate(`/game/${tournament.room_code}/pick`);
+        } else if (tournament.status === 'drafting') {
+          if (!normalizedUrl.includes('/draft')) {
+            appNavigate(`/draft/${tournament.room_code}`);
           }
         } else if (tournament.status === 'playing') {
           if (!normalizedUrl.includes('/game-hub') && !normalizedUrl.includes('/play/')) {

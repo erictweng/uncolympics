@@ -1,3 +1,4 @@
+// @ts-nocheck — Legacy page kept for reference (replaced by Draft.tsx)
 import { useEffect, useState, useMemo, useCallback } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence, LayoutGroup } from 'framer-motion'

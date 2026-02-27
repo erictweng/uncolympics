@@ -44,11 +44,8 @@ function Home() {
       case 'lobby':
         navigate(`/lobby/${code}`)
         break
-      case 'team_select':
-        navigate(`/team-select/${code}`)
-        break
-      case 'picking':
-        navigate(`/game/${code}/pick`)
+      case 'drafting':
+        navigate(`/draft/${code}`)
         break
       case 'playing':
         navigate(`/game/${code}/play`)

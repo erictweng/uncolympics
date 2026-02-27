@@ -200,11 +200,8 @@ function navigateToStatus(
     case 'game_setup':
       targetPath = `/game-setup/${rc}`
       break
-    case 'team_select':
-      targetPath = `/team-select/${rc}`
-      break
-    case 'picking':
-      targetPath = `/game/${rc}/pick`
+    case 'drafting':
+      targetPath = `/draft/${rc}`
       break
     case 'playing':
       // Phase 1: go to game-hub for predetermined game flow

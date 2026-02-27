@@ -1,5 +1,5 @@
 // Tournament and Player types (existing in store/api)
-export type TournamentStatus = 'lobby' | 'game_setup' | 'team_select' | 'shuffling' | 'picking' | 'playing' | 'scoring' | 'completed'
+export type TournamentStatus = 'lobby' | 'game_setup' | 'drafting' | 'playing' | 'scoring' | 'completed'
 
 export interface Tournament {
   id: string
@@ -12,6 +12,8 @@ export interface Tournament {
   current_pick_team: string | null
   current_game_index: number
   dice_roll_data: DiceRollData | null
+  draft_turn: string | null
+  draft_pick_number: number
   created_at: string
 }
 
@@ -31,6 +33,7 @@ export interface Player {
   role: 'referee' | 'player' | 'spectator'
   is_leader: boolean
   tier: 'wonderkid' | 'rising_prospect' | 'certified' | 'seasoned_veteran' | null
+  is_captain: boolean
   draft_order: number | null
   created_at: string
 }
