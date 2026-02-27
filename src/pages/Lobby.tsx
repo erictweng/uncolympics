@@ -15,12 +15,20 @@ import { SwipeHint } from '../components/ui/SwipeHint'
 import { ConfirmModal } from '../components/ui/ConfirmModal'
 import { useReconnect } from '../hooks/useReconnect'
 
+const TIER_EMOJI: Record<string, string> = {
+  wonderkid: '🌟',
+  rising_prospect: '🔥',
+  certified: '✅',
+  seasoned_veteran: '👑',
+}
+
 function Lobby() {
   const { roomCode } = useParams<{ roomCode: string }>()
   const navigate = useNavigate()
   const [error, setError] = useState<string | null>(null)
   const [showConfirmModal, setShowConfirmModal] = useState(false)
   const [exiting, setExiting] = useState(false)
+  const [playerTiers, setPlayerTiers] = useState<Record<string, string>>({})
 
   // Single reconnect hook handles: fetch state, set up realtime, redirect if needed
   // shouldNavigate=true so if tournament moved past lobby, we redirect
@@ -53,6 +61,24 @@ function Lobby() {
     ensureTeams()
   }, [reconnectStatus, tournament?.id])
   
+  // Fetch tiers for all players
+  useEffect(() => {
+    const userIds = players.map(p => p.user_id).filter(Boolean) as string[]
+    if (userIds.length === 0) return
+
+    supabase
+      .from('profiles')
+      .select('id, tier')
+      .in('id', userIds)
+      .then(({ data }) => {
+        if (data) {
+          const map: Record<string, string> = {}
+          data.forEach((p: any) => { if (p.tier) map[p.id] = p.tier })
+          setPlayerTiers(map)
+        }
+      })
+  }, [players])
+
   useEffect(() => {
     document.title = `UNCOLYMPICS - Lobby ${roomCode || ''}`;
   }, [roomCode]);
@@ -221,6 +247,11 @@ function Lobby() {
                   }}
                 >
                   {player.name}
+                  {player.user_id && playerTiers[player.user_id] && (
+                    <span className="ml-1" style={{ fontSize: `${Math.max(fontSize * 0.6, 1.5)}vh` }}>
+                      {TIER_EMOJI[playerTiers[player.user_id]]}
+                    </span>
+                  )}
                 </div>
               </motion.div>
             )

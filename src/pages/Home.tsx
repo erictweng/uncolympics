@@ -117,6 +117,30 @@ function Home() {
         </Link>
       </motion.div>
 
+      {/* Retake Survey + Tier display */}
+      {profile && (
+        <motion.div
+          className="w-full max-w-sm text-center"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.4, delay: 2.0 }}
+        >
+          {profile.tier && (
+            <span className="text-sm text-gray-500 mr-2">
+              {profile.tier === 'wonderkid' && '🌟'}
+              {profile.tier === 'rising_prospect' && '🔥'}
+              {profile.tier === 'certified' && '✅'}
+              {profile.tier === 'seasoned_veteran' && '👑'}
+              {' '}
+              {profile.tier.replace('_', ' ').replace(/\b\w/g, c => c.toUpperCase())}
+            </span>
+          )}
+          <Link to="/survey" className="text-xs text-gray-600 hover:text-gray-400 transition-colors">
+            Retake Survey
+          </Link>
+        </motion.div>
+      )}
+
       {/* Reconnect button */}
       {reconnectData && (
         <motion.div

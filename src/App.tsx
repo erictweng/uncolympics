@@ -4,10 +4,12 @@ import { useEffect } from 'react'
 import Layout from './components/Layout'
 import { PageTransition } from './components/PageTransition'
 import { AuthGuard } from './components/AuthGuard'
+import { SurveyGuard } from './components/SurveyGuard'
 import { setNavigate } from './lib/navigation'
 
 // Import page components
 import Home from './pages/Home'
+import Survey from './pages/Survey'
 import Login from './pages/Login'
 import AuthCallback from './pages/AuthCallback'
 import CreateTournament from './pages/CreateTournament'
@@ -52,21 +54,24 @@ function App() {
             <Route path="/login" element={<PageTransition><Login /></PageTransition>} />
             <Route path="/auth/callback" element={<AuthCallback />} />
 
-            {/* Protected routes */}
-            <Route path="/" element={<AuthGuard><PageTransition><Home /></PageTransition></AuthGuard>} />
-            <Route path="/create" element={<AuthGuard><PageTransition><CreateTournament /></PageTransition></AuthGuard>} />
-            <Route path="/join" element={<AuthGuard><PageTransition><JoinTournament /></PageTransition></AuthGuard>} />
-            <Route path="/lobby/:roomCode" element={<AuthGuard><PageTransition><Lobby /></PageTransition></AuthGuard>} />
-            <Route path="/team-select/:roomCode" element={<AuthGuard><PageTransition><TeamSelection /></PageTransition></AuthGuard>} />
-            <Route path="/game-setup/:roomCode" element={<AuthGuard><PageTransition><GameSetup /></PageTransition></AuthGuard>} />
-            <Route path="/draft/:roomCode" element={<AuthGuard><PageTransition><Draft /></PageTransition></AuthGuard>} />
-            <Route path="/game-hub/:roomCode" element={<AuthGuard><PageTransition><GameHub /></PageTransition></AuthGuard>} />
-            <Route path="/game/:roomCode/pick" element={<AuthGuard><PageTransition><GamePick /></PageTransition></AuthGuard>} />
-            <Route path="/game/:roomCode/play/:gameId" element={<AuthGuard><PageTransition><GamePlay /></PageTransition></AuthGuard>} />
-            <Route path="/game/:roomCode/reveal/:gameId" element={<AuthGuard><PageTransition><TitleReveal /></PageTransition></AuthGuard>} />
-            <Route path="/scoreboard/:roomCode" element={<AuthGuard><PageTransition><Scoreboard /></PageTransition></AuthGuard>} />
-            <Route path="/ceremony/:roomCode" element={<AuthGuard><PageTransition><Ceremony /></PageTransition></AuthGuard>} />
-            <Route path="/history" element={<AuthGuard><PageTransition><History /></PageTransition></AuthGuard>} />
+            {/* Auth-only (no survey required) */}
+            <Route path="/survey" element={<AuthGuard><PageTransition><Survey /></PageTransition></AuthGuard>} />
+
+            {/* Fully protected routes (auth + survey) */}
+            <Route path="/" element={<AuthGuard><SurveyGuard><PageTransition><Home /></PageTransition></SurveyGuard></AuthGuard>} />
+            <Route path="/create" element={<AuthGuard><SurveyGuard><PageTransition><CreateTournament /></PageTransition></SurveyGuard></AuthGuard>} />
+            <Route path="/join" element={<AuthGuard><SurveyGuard><PageTransition><JoinTournament /></PageTransition></SurveyGuard></AuthGuard>} />
+            <Route path="/lobby/:roomCode" element={<AuthGuard><SurveyGuard><PageTransition><Lobby /></PageTransition></SurveyGuard></AuthGuard>} />
+            <Route path="/team-select/:roomCode" element={<AuthGuard><SurveyGuard><PageTransition><TeamSelection /></PageTransition></SurveyGuard></AuthGuard>} />
+            <Route path="/game-setup/:roomCode" element={<AuthGuard><SurveyGuard><PageTransition><GameSetup /></PageTransition></SurveyGuard></AuthGuard>} />
+            <Route path="/draft/:roomCode" element={<AuthGuard><SurveyGuard><PageTransition><Draft /></PageTransition></SurveyGuard></AuthGuard>} />
+            <Route path="/game-hub/:roomCode" element={<AuthGuard><SurveyGuard><PageTransition><GameHub /></PageTransition></SurveyGuard></AuthGuard>} />
+            <Route path="/game/:roomCode/pick" element={<AuthGuard><SurveyGuard><PageTransition><GamePick /></PageTransition></SurveyGuard></AuthGuard>} />
+            <Route path="/game/:roomCode/play/:gameId" element={<AuthGuard><SurveyGuard><PageTransition><GamePlay /></PageTransition></SurveyGuard></AuthGuard>} />
+            <Route path="/game/:roomCode/reveal/:gameId" element={<AuthGuard><SurveyGuard><PageTransition><TitleReveal /></PageTransition></SurveyGuard></AuthGuard>} />
+            <Route path="/scoreboard/:roomCode" element={<AuthGuard><SurveyGuard><PageTransition><Scoreboard /></PageTransition></SurveyGuard></AuthGuard>} />
+            <Route path="/ceremony/:roomCode" element={<AuthGuard><SurveyGuard><PageTransition><Ceremony /></PageTransition></SurveyGuard></AuthGuard>} />
+            <Route path="/history" element={<AuthGuard><SurveyGuard><PageTransition><History /></PageTransition></SurveyGuard></AuthGuard>} />
           </Routes>
         </AnimatePresence>
       </Layout>
